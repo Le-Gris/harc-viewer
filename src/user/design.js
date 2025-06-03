@@ -16,21 +16,14 @@ import Advertisement from '@/builtins/advertisement/AdvertisementView.vue'
 import MTurk from '@/builtins/mturk/MTurkRecruitView.vue'
 import Consent from '@/builtins/simple_consent/InformedConsentView.vue'
 import DemographicSurvey from '@/builtins/demographic_survey/DemographicSurveyView.vue'
-import DeviceSurvey from '@/builtins/device_survey/DeviceSurveyView.vue'
-import Captcha from '@/builtins/captcha/CaptchaView.vue'
-import Instructions from '@/builtins/instructions/InstructionsView.vue'
-import InstructionsQuiz from '@/builtins/instructions_quiz/InstructionsQuiz.vue'
 import Debrief from '@/builtins/debrief/DebriefView.vue'
-import TaskFeedbackSurvey from '@/builtins/task_survey/TaskFeedbackSurveyView.vue'
 import Thanks from '@/builtins/thanks/ThanksView.vue'
 import Withdraw from '@/builtins/withdraw/WithdrawView.vue'
 import WindowSizer from '@/builtins/window_sizer/WindowSizerView.vue'
 
 // 2. Import user View components
-import Exp from '@/builtins/tasks/ExpView.vue'
-import Task1 from '@/builtins/tasks/Task1View.vue'
-import Task2 from '@/builtins/tasks/Task2View.vue'
-import StroopExp from '@/user/components/stroop_exp/StroopView.vue'
+import Instructions from '@/user/components/Instructions.vue'
+import Experiment from '@/user/components/Experiment.vue'
 
 // #3. Import smile API and timeline
 import useAPI from '@/core/composables/useAPI'
@@ -58,11 +51,10 @@ api.setRuntimeConfig('maxWrites', 1000)
 api.setRuntimeConfig('minWriteInterval', 2000)
 api.setRuntimeConfig('autoSave', true)
 
-api.setRuntimeConfig('payrate', '$15USD/hour prorated for estimated completition time + performance related bonus')
+api.setRuntimeConfig('payrate', '$20USD/hour prorated for estimated completition time + performance related bonus')
 
 // get rid of these two?
-api.setRuntimeConfig('estimated_time', '30-40 minutes')
-api.setRuntimeConfig('payrate', '$15USD/hour prorated for estimated completition time + performance related bonus')
+api.setRuntimeConfig('estimated_time', '30 minutes')
 
 // set the informed consent text on the menu bar
 import InformedConsentText from './components/InformedConsentText.vue'
@@ -75,21 +67,24 @@ api.setAppComponent('informed_consent_text', InformedConsentText)
 // where the key is the condition name and the value is an array of possible condition values.
 // Each unique condition manipulation should be assigned via a separate call to setConditions.
 
-api.randomAssignCondition({
-  taskOrder: ['AB', 'BA'],
-})
+// api.randomAssignCondition({
+//   taskOrder: ['AB', 'BA'],
+// })
 
-api.randomAssignCondition({
-  variation: ['alpha', 'beta'],
-})
+// api.randomAssignCondition({
+//   variation: ['alpha', 'beta'],
+// })
 
-// you can also optionally set randomization weights for each condition. For
-// example, if you want twice as many participants to be assigned to instructions
-// version 1 compared to versions 2 and 3, you can set the weights as follows:
-api.randomAssignCondition({
-  instructionsVersion: ['1', '2', '3'],
-  weights: [2, 1, 1], // weights are automatically normalized, so [4, 2, 2] would be the same
-})
+// // you can also optionally set randomization weights for each condition. For
+// // example, if you want twice as many participants to be assigned to instructions
+// // version 1 compared to versions 2 and 3, you can set the weights as follows:
+// api.randomAssignCondition({
+//   instructionsVersion: ['1', '2', '3'],
+//   weights: [2, 1, 1], // weights are automatically normalized, so [4, 2, 2] would be the same
+// })
+
+// Set the 'conds' condition to a random integer between 0 and 399
+smilestore.setCondition('conds', api.randomInt(0, 399))
 
 // #6. Define and add some routes to the timeline
 // Each route should map to a View component.
@@ -178,64 +173,76 @@ timeline.pushSeqView({
   component: WindowSizer,
 })
 
-// captcha
-timeline.pushSeqView({
-  name: 'captcha',
-  component: Captcha,
-})
+// // captcha
+// timeline.pushSeqView({
+//   name: 'captcha',
+//   component: Captcha,
+// })
 
-// instructions
-timeline.pushSeqView({
-  name: 'instructions',
-  component: Instructions,
-})
+// // instructions
+// timeline.pushSeqView({
+//   name: 'instructions',
+//   component: Instructions,
+// })
 
-// import the quiz questions
-import { QUIZ_QUESTIONS } from './components/quizQuestions'
-// instructions quiz
-timeline.pushSeqView({
-  name: 'quiz',
-  component: InstructionsQuiz,
-  props: {
-    questions: QUIZ_QUESTIONS,
-    returnTo: 'instructions',
-    randomizeQandA: true,
-  },
-})
+// // import the quiz questions
+// import { QUIZ_QUESTIONS } from './components/quizQuestions'
+// // instructions quiz
+// timeline.pushSeqView({
+//   name: 'quiz',
+//   component: InstructionsQuiz,
+//   props: {
+//     questions: QUIZ_QUESTIONS,
+//     returnTo: 'instructions',
+//     randomizeQandA: true,
+//   },
+// })
 
 // main experiment
 // note: by default, the path will be set to the name of the view
 // however, you can override this by setting the path explicitly
 timeline.pushSeqView({
-  name: 'exp',
+  name: 'instructions',
+  path: '/instructions',
+  component: Instructions,
+  meta: {
+    next: 'experiment',
+  },
+})
+
+timeline.pushSeqView({
+  name: 'experiment',
   path: '/experiment',
-  component: Exp,
+  component: Experiment,
+  meta: {
+    next: 'debrief',
+  },
 })
 
 ////// example of randomized branching routes
 // (you can also have conditional branching based on conditions -- see docs)
 
 // routes must be initially registered, to tell the timeline they exist
-timeline.registerView({
-  name: 'task1',
-  component: Task1,
-})
+// timeline.registerView({
+//   name: 'task1',
+//   component: Task1,
+// })
 
-timeline.registerView({
-  name: 'task2',
-  component: Task2,
-})
+// timeline.registerView({
+//   name: 'task2',
+//   component: Task2,
+// })
 
-timeline.pushRandomizedNode({
-  name: 'RandomSplit',
-  options: [['task1'], ['task2']],
-})
+// timeline.pushRandomizedNode({
+//   name: 'RandomSplit',
+//   options: [['task1'], ['task2']],
+// })
 
-// stroop exp
-timeline.pushSeqView({
-  name: 'stroop',
-  component: StroopExp,
-})
+// // stroop exp
+// timeline.pushSeqView({
+//   name: 'stroop',
+//   component: StroopExp,
+// })
 
 // debriefing form
 import DebriefText from '@/user/components/DebriefText.vue' // get access to the global store
@@ -247,18 +254,18 @@ timeline.pushSeqView({
   },
 })
 
-// device survey
-timeline.pushSeqView({
-  name: 'device',
-  component: DeviceSurvey,
-})
+// // device survey
+// timeline.pushSeqView({
+//   name: 'device',
+//   component: DeviceSurvey,
+// })
 
-// debriefing form
-timeline.pushSeqView({
-  name: 'feedback',
-  component: TaskFeedbackSurvey,
-  meta: { setDone: true }, // this is the last form
-})
+// // debriefing form
+// timeline.pushSeqView({
+//   name: 'feedback',
+//   component: TaskFeedbackSurvey,
+//   meta: { setDone: true }, // this is the last form
+// })
 
 // thanks/submit page
 timeline.pushSeqView({
