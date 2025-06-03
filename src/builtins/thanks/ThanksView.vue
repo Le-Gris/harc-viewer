@@ -64,22 +64,25 @@ clipboard.on('success', (e) => {
         assigned at that time. We really appreciate your time.
       </p>
       <hr />
-      <a :href="`https://app.prolific.co/submissions/complete?cc=${completionCode}`" class="button is-info"
-        >Submit my work to Prolific &nbsp;
+      <a :href="`https://app.prolific.co/submissions/complete?cc=${completionCode}`" class="button is-info">Submit my
+        work to Prolific &nbsp;
         <FAIcon icon="fa-solid fa-arrow-right" />
       </a>
     </div>
     <div class="payment" v-if="api.getRecruitmentService() == 'cloudresearch'">
-      <h1 class="title is-3">Thanks, let's begin the payment process!</h1>
-      <p class="has-text-left pb-5">
-        Please copy the code displayed below (or click the button) and paste it into the Mechanical Turk window to begin
-        the process of payment. Your work will be approved within several hours and any performance related bonuses will
-        be assigned at that time. We really appreciate your time.
+      <h1 class="title is-3">Thanks, your payment will be processed soon!</h1>
+      <p class="has-text-center pb-5">
+        Your work will be approved shortly and any performance
+        related bonuses will be assigned at that time. We really appreciate your time. Please copy the unique
+        completion code below and paste it into the CloudResearch window to complete the task.
+      </p>
+      <p class="has-text-center pb-5">
+        Your data have been successfully recorded and you can close this window or navigate to another page.
       </p>
       <hr />
       <h1 class="title is-5">Unique completion code:</h1>
-      <span class="completioncode">{{ completionCode }}</span
-      ><button class="button is-info" id="copy_code" data-clipboard-target=".completioncode">
+      <span class="completioncode">{{ completionCode }}</span><button class="button is-info" id="copy_code"
+        data-clipboard-target=".completioncode">
         Copy Code &nbsp;
         <FAIcon icon="fa-solid fa-clipboard" />
       </button>
@@ -87,15 +90,16 @@ clipboard.on('success', (e) => {
     <div class="payment" v-if="api.getRecruitmentService() == 'mturk'">
       <h1 class="title is-3">Thanks, let's begin the payment process!</h1>
       <p class="has-text-left pb-5">
-        Please verify the code displayed below is visible in the form on the Mechanical Turk website. If it is not click
-        the button to copy it to your clipboard and paste it into the Mechanical Turk window to begin the process of
-        payment. Your work will be approved within several hours and any performance related bonuses will be assigned at
-        that time. We really appreciate your time.
+        Please verify the code displayed below is visible in the form on the Mechanical Turk website.
+        If it is not click the button to copy it to your clipboard and paste it into the Mechanical Turk window
+        to begin the process of payment.
+        Your work will be approved within several hours and any performance
+        related bonuses will be assigned at that time. We really appreciate your time.
       </p>
       <hr />
       <h1 class="title is-5">Unique completion code:</h1>
-      <span class="completioncode">{{ completionCode }}</span
-      ><button class="button is-info" id="copy_code" data-clipboard-target=".completioncode">
+      <span class="completioncode">{{ completionCode }}</span><button class="button is-info" id="copy_code"
+        data-clipboard-target=".completioncode">
         Copy Code &nbsp;
         <FAIcon icon="fa-solid fa-clipboard" />
       </button>
@@ -104,14 +108,16 @@ clipboard.on('success', (e) => {
       <h1 class="title is-3">Thanks, let's begin the payment process!</h1>
       <p class="has-text-left pb-5">This still needs to be implemented</p>
       <hr />
-      <a :href="!appconfig.anonymousMode ? 'http://gureckislab.org' : 'http://google.com'" class="button is-info"
-        >Submit my work &nbsp;
+      <a :href="!appconfig.anonymousMode ? 'http://gureckislab.org' : 'http://google.com'" class="button is-info">Submit
+        my work &nbsp;
         <FAIcon icon="fa-solid fa-arrow-right" />
       </a>
     </div>
     <div class="payment" v-if="api.getRecruitmentService() == 'web'">
+      <p>
       <h1 class="title is-3">Thanks for your contribution to science!</h1>
-      <p>Your data have been successfully recorded and you can close this window or navigate to another page.</p>
+      Your data have been successfully recorded and you can close this window or navigate to another page.
+      </p>
     </div>
   </div>
 </template>
