@@ -22,8 +22,9 @@ import Withdraw from '@/builtins/withdraw/WithdrawView.vue'
 import WindowSizer from '@/builtins/window_sizer/WindowSizerView.vue'
 
 // 2. Import user View components
-import Instructions from '@/user/components/Instructions.vue'
-import Experiment from '@/user/components/Experiment.vue'
+// import Instructions from '@/user/components/Instructions.vue'
+// import Experiment from '@/user/components/Experiment.vue'
+import Experiment from '@/user/components/ExpView.vue'
 
 // #3. Import smile API and timeline
 import useAPI from '@/core/composables/useAPI'
@@ -201,14 +202,14 @@ timeline.pushSeqView({
 // main experiment
 // note: by default, the path will be set to the name of the view
 // however, you can override this by setting the path explicitly
-timeline.pushSeqView({
-  name: 'instructions',
-  path: '/instructions',
-  component: Instructions,
-  meta: {
-    next: 'experiment',
-  },
-})
+// timeline.pushSeqView({
+//   name: 'instructions',
+//   path: '/instructions',
+//   component: Instructions,
+//   meta: {
+//     next: 'experiment',
+//   },
+// })
 
 timeline.pushSeqView({
   name: 'experiment',
