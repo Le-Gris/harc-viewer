@@ -58,7 +58,7 @@ function parseWidthHeight(value) {
  * @property {string} firebaseConfig.appId - Firebase app ID
  */
 export default {
-  mode: import.meta.env.MODE,
+  mode: 'presentation',
   projectName: import.meta.env.VITE_PROJECT_NAME, // autocompute this on intitialization
   projectRef: import.meta.env.VITE_DEPLOY_BASE_PATH.slice(1, -1).replace(/\//g, '-'),
   codeName: import.meta.env.VITE_CODE_NAME,
