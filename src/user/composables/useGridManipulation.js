@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { Grid, floodfill } from '@/user/utils/arcUtils'
-import { GRID_CONFIG, TOOLS, DEFAULT_SYMBOL, EXPERIMENT_CONFIG } from '@/user/utils/arcConstants'
-import { infoMsg, successMsg, errorMsg } from '@/user/utils/uiUtils'
+import { GRID_CONFIG, TOOLS, DEFAULT_SYMBOL, EXPERIMENT_CONFIG } from '@/user/utils/arcConstants.js'
+import { infoMsg, successMsg, errorMsg } from '@/user/utils/uiUtils.js'
 
 export default function useGridManipulation(logAction) {
   // Grid state

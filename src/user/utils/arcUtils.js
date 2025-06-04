@@ -1,5 +1,5 @@
 // Grid Class and ARC Task Utilities
-import { errorMsg } from './uiUtils'
+import { errorMsg } from './uiUtils.js'
 
 export class Grid {
   constructor(height, width, values) {
