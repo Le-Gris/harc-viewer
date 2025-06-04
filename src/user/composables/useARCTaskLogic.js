@@ -26,7 +26,7 @@ export default function useArcTaskLogic(taskFileName, taskIndex, datasetType, is
   const firstDescriptionText = ref('')
   const finalDescriptionText = ref('')
 
-  // --- Grid Manipulation (delegated to shared composable) ---
+  // --- Grid Manipulation ---
   const {
     currentOutputGrid,
     outputGridHeight,
