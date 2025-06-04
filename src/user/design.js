@@ -13,54 +13,70 @@ import Withdraw from '@/builtins/withdraw/WithdrawView.vue'
 import WindowSizer from '@/builtins/window_sizer/WindowSizerView.vue'
 
 // User Views for ARC Experiment
-import TutorialSlidesView from '@/user/views/TutorialSlidesView.vue'
-import TutorialQuizView from '@/user/views/TutorialQuizView.vue'
-import ArcTaskRunnerView from '@/user/views/ArcTaskRunnerView.vue'
-import ExperimentFinishedView from '@/user/views/ExperimentFinishedView.vue'
+import TutorialSlidesView from '@/user/components/TutorialSlidesView.vue'
+import TutorialQuizView from '@/user/components/TutorialQuizView.vue'
+import ArcTaskRunnerView from '@/user/components/ArcTaskRunnerView.vue'
+import ExperimentFinishedView from '@/user/components/ExperimentFinishedView.vue'
+
+// Import task file lists for randomization
+import trainingFileNames from '@/user/assets/arcTrainingFileNames'
+import evaluationFileNames from '@/user/assets/arcEvalFileNames'
 
 import useAPI from '@/core/composables/useAPI'
-const api = useAPI()
 import Timeline from '@/core/timeline'
-const timeline = new Timeline(api)
-import useSmileStore from '@/core/stores/smilestore'
-const smilestore = useSmileStore()
+import { EXPERIMENT_CONFIG } from '@/user/utils/arcConstants'
+import { sampleWithoutReplacement } from '@/core/randomization'
 
-// Runtime Config (as before)
+const api = useAPI()
+const timeline = new Timeline(api)
+
+// Runtime Config
 api.setRuntimeConfig('allowRepeats', false)
 api.setRuntimeConfig('windowsizerRequest', { width: 800, height: 600 })
 api.setRuntimeConfig('windowsizerAggressive', true)
-// ... other configs ...
-import InformedConsentText from './components/InformedConsentText.vue' // Assuming this path is correct
+
+import InformedConsentText from './components/InformedConsentText.vue'
 api.setAppComponent('informed_consent_text', InformedConsentText)
 
-// Condition Assignment
-// Define the list of task files for the experiment
-// This should come from your arcEvalFileNames.js or similar
-// For example:
-import experimentTaskFiles from '@/user/assets/arcEvalFileNames' // ENSURE THIS PATH IS CORRECT
-const MAX_EXPERIMENT_TASKS = 5
+// --- Two-Level Randomization Setup ---
+// Level 1: Assign participants to dataset (training vs evaluation)
+api.randomAssignCondition({
+  dataset: ['training', 'evaluation'],
+})
 
-// Function to select and shuffle tasks
-function prepareExperimentTasks() {
-  let allTasks = [...experimentTaskFiles] // Use a copy
-  // Shuffle (implement or import shuffleArray from uiUtils)
-  for (let i = allTasks.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[allTasks[i], allTasks[j]] = [allTasks[j], allTasks[i]]
-  }
-  return allTasks.slice(0, MAX_EXPERIMENT_TASKS)
+// Level 2: Create randomized task lists for each dataset condition
+// Create randomized task selections for each dataset using core randomization function
+const trainingTaskSelection = sampleWithoutReplacement(trainingFileNames, EXPERIMENT_CONFIG.MAX_TASKS_PER_EXPERIMENT)
+const evaluationTaskSelection = sampleWithoutReplacement(
+  evaluationFileNames,
+  EXPERIMENT_CONFIG.MAX_TASKS_PER_EXPERIMENT
+)
+
+// Store the task selections in the API for access by components
+api.setRuntimeConfig('trainingTaskSelection', trainingTaskSelection)
+api.setRuntimeConfig('evaluationTaskSelection', evaluationTaskSelection)
+
+// Function to get the appropriate task filename based on condition and task number
+function getTaskFileName(taskNumber) {
+  const dataset = api.getConditionByName('dataset')
+  const taskSelection = dataset === 'training' ? trainingTaskSelection : evaluationTaskSelection
+  return taskSelection[taskNumber - 1] // taskNumber is 1-indexed, array is 0-indexed
 }
 
-// Store selected tasks in smilestore so ArcTaskRunnerView can access the *correct* one in sequence
-const selectedTasksForRun = prepareExperimentTasks()
-smilestore.setSystemData('experiment_task_sequence', selectedTasksForRun)
-smilestore.setSystemData('current_experiment_task_index', 0) // To track progress
-
-const TUTORIAL_TASK_FILENAME = 'e9afcf9a.json' // Your tutorial task file
+// Function to get the tutorial task filename (from opposite dataset)
+function getTutorialTaskFileName() {
+  const dataset = api.getConditionByName('dataset')
+  // Use task from opposite dataset to avoid overlap with experiment tasks
+  if (dataset === 'training') {
+    return '21f83797.json' // From evaluation set
+  } else {
+    return 'e9afcf9a.json' // From training set
+  }
+}
 
 // --- Timeline Definition ---
 
-// Welcome / MTurk (as before)
+// Welcome / MTurk
 timeline.pushSeqView({
   path: '/welcome',
   name: 'welcome_anonymous',
@@ -70,6 +86,7 @@ timeline.pushSeqView({
     api.getBrowserFingerprint()
   },
 })
+
 timeline.pushSeqView({
   path: '/welcome/:service',
   name: 'welcome_referred',
@@ -80,12 +97,10 @@ timeline.pushSeqView({
     api.getBrowserFingerprint()
   },
 })
+
 timeline.registerView({
   name: 'mturk',
   component: MTurk,
-  props: {
-    /* ... */
-  },
   meta: { allowAlways: true, requiresConsent: false },
   beforeEnter: (to) => {
     processQuery(to.query, 'mturk')
@@ -107,75 +122,89 @@ timeline.pushSeqView({ name: 'demograph', component: DemographicSurvey })
 timeline.pushSeqView({ name: 'windowsizer', component: WindowSizer })
 
 // --- ARC Experiment Flow ---
-// 1. Tutorial Slides
+// Tutorial Slides
 timeline.pushSeqView({
   name: 'tutorial_slides',
   component: TutorialSlidesView,
-  meta: { next: 'tutorial_task_runner' }, // Explicitly set next for clarity
+  meta: { next: 'tutorial_task_runner' },
 })
 
-// 2. Tutorial Task
+// Tutorial Task
 timeline.pushSeqView({
   name: 'tutorial_task_runner',
   component: ArcTaskRunnerView,
   props: {
-    taskFileName: TUTORIAL_TASK_FILENAME, // Specific tutorial task
+    taskFileName: getTutorialTaskFileName(),
+    datasetType: (() => {
+      const dataset = api.getConditionByName('dataset')
+      return dataset === 'training' ? 'evaluation' : 'training' // opposite dataset
+    })(),
     isTutorialMode: true,
-    taskNumber: 0, // Or some other indicator for tutorial
+    taskNumber: 0,
     totalTasks: 0,
   },
   meta: { next: 'tutorial_quiz' },
+  beforeEnter: (to) => {
+    // Log the tutorial task assignment for debugging and data analysis
+    const tutorialTask = getTutorialTaskFileName()
+    const dataset = api.getConditionByName('dataset')
+    const oppositeDataset = dataset === 'training' ? 'evaluation' : 'training'
+    console.log(
+      `Loading tutorial task: ${tutorialTask} from ${oppositeDataset} dataset (participant assigned to ${dataset} dataset)`
+    )
+  },
 })
 
-// 3. Tutorial Quiz
+// Tutorial Quiz
 timeline.pushSeqView({
   name: 'tutorial_quiz',
   component: TutorialQuizView,
-  // meta: { next: 'experiment_task_1' } // Next will be the first experiment task
+  meta: { next: 'experiment_task_1' },
 })
 
-// 4. Experiment Tasks (Looping or sequential)
-// We'll add these dynamically or use a clever routing approach
-// For dynamic addition:
-selectedTasksForRun.forEach((taskFile, index) => {
+// Experiment Tasks - Create tasks dynamically with proper taskFileName assignment
+for (let i = 1; i <= EXPERIMENT_CONFIG.MAX_TASKS_PER_EXPERIMENT; i++) {
   timeline.pushSeqView({
-    name: `experiment_task_${index + 1}`,
+    name: `experiment_task_${i}`,
     component: ArcTaskRunnerView,
     props: {
-      taskFileName: taskFile,
+      taskFileName: getTaskFileName(i), // Now properly assigned based on randomization
+      datasetType: api.getConditionByName('dataset'), // Use assigned dataset
       isTutorialMode: false,
-      taskNumber: index + 1,
-      totalTasks: selectedTasksForRun.length,
+      taskNumber: i,
+      totalTasks: EXPERIMENT_CONFIG.MAX_TASKS_PER_EXPERIMENT,
     },
-    // 'next' will automatically go to the next in sequence, or 'finished_experiment' after the last one
-    meta: index === selectedTasksForRun.length - 1 ? { next: 'finished_experiment' } : {},
+    meta: i === EXPERIMENT_CONFIG.MAX_TASKS_PER_EXPERIMENT ? { next: 'finished_experiment' } : {},
+    beforeEnter: (to) => {
+      // Log the task assignment for debugging and data analysis
+      console.log(
+        `Loading experiment task ${i}: ${getTaskFileName(i)} from ${api.getConditionByName('dataset')} dataset`
+      )
+    },
   })
-})
+}
 
-// 5. Finished Experiment (Feedback)
+// Finished Experiment (Feedback)
 timeline.pushSeqView({
   name: 'finished_experiment',
   component: ExperimentFinishedView,
-  meta: { next: 'debrief' }, // Or directly to 'thanks' if debrief is simple
+  meta: { next: 'debrief' },
 })
 
 // --- Standard Post-Experiment Views ---
-// Debrief
-import DebriefText from '@/user/components/DebriefText.vue' // Assuming path
+import DebriefText from '@/user/components/DebriefText.vue'
 timeline.pushSeqView({
   name: 'debrief',
   component: Debrief,
   props: { debriefText: markRaw(DebriefText) },
 })
 
-// Thanks
 timeline.pushSeqView({
   name: 'thanks',
   component: Thanks,
   meta: { requiresDone: true, resetApp: api.getConfig('allowRepeats') },
 })
 
-// Withdraw
 timeline.registerView({
   name: 'withdraw',
   component: Withdraw,

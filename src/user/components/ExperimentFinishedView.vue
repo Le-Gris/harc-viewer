@@ -9,11 +9,10 @@ const feedbackText = ref("");
 
 function submitFeedback() {
     // Save feedback to smilestore
-    // You might want a specific place in smilestore for this
-    smilestore.setGlobalData('experiment_feedback', feedbackText.value);
+    smilestore.recordProperty('experiment_feedback', feedbackText.value);
     smilestore.saveData();
 
-    api.next(); // Or a specific "finish" call if Smile has one
+    api.goNextView(); // Or a specific "finish" call if Smile has one
     // This will take to the 'thanks' page in design.js
 }
 </script>

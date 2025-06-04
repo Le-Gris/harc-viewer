@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import useArcTaskLogic from '@/user/composables/useArcTaskLogic';
 import EditableGrid from '@/user/components/EditableGrid.vue';
-import useViewAPI from '@/core/composables/useViewAPI'; // For api.next()
+import useViewAPI from '@/core/composables/useViewAPI'; // For api.goNextView()
 import useSmileStore from "@/core/stores/smilestore";
 
 const props = defineProps({
@@ -10,11 +10,16 @@ const props = defineProps({
         type: String,
         required: true,
     },
+    datasetType: {
+        type: String,
+        required: true,
+        validator: (value) => ['training', 'evaluation'].includes(value),
+    },
     isTutorialMode: {
         type: Boolean,
         default: false,
     },
-    // Add any other props needed from design.js, like task sequence info
+    // Other props needed from design.js
     taskNumber: Number,
     totalTasks: Number,
 });
@@ -22,7 +27,7 @@ const props = defineProps({
 const viewApi = useViewAPI();
 const smilestore = useSmileStore();
 
-const taskLogic = useArcTaskLogic(props.taskFileName, props.isTutorialMode, smilestore, viewApi);
+const taskLogic = useArcTaskLogic(props.taskFileName, props.taskNumber, props.datasetType, props.isTutorialMode, smilestore, viewApi);
 
 const localDescriptionModel = ref(""); // For the textarea
 
@@ -30,7 +35,7 @@ onMounted(() => {
     taskLogic.loadTask();
     taskLogic.onFinish(() => {
         // Task logic signals it's finished (solved/exhausted & description submitted)
-        viewApi.next();
+        viewApi.goNextView();
     });
 });
 
@@ -75,7 +80,7 @@ const trainPairsForDisplay = computed(() => {
 
 const infoBarText = computed(() => {
     let text = props.isTutorialMode ? `Tutorial Task: ${props.taskFileName}` :
-        `Task ${props.taskNumber || '-'}/${props.totalTasks || '-'} (${props.taskFileName})`;
+        `Task ${props.taskNumber || '-'}/${props.totalTasks || '-'}`;
     text += ` | Attempt: ${taskLogic.currentAttempt.value}/${taskLogic.MAX_ATTEMPTS}`;
     if (taskLogic.isSolved.value) text += " (Solved)";
     return text;
@@ -129,7 +134,7 @@ function handleKeyDown(event) {
         }
     }
 }
-import { onUnmounted } from 'vue'; // Import onUnmounted
+
 onMounted(() => window.addEventListener('keydown', handleKeyDown));
 onUnmounted(() => window.removeEventListener('keydown', handleKeyDown));
 
@@ -147,13 +152,13 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyDown));
                 <div v-for="(pair, index) in trainPairsForDisplay" :key="pair.id" class="example-pair">
                     <div class="grid-group">
                         <div class="grid-header">Example Input {{ index + 1 }}</div>
-                        <EditableGrid :gridInstance="pair.inputGrid" :containerWidth="180" :containerHeight="180"
-                            :maxCellSize="50" />
+                        <EditableGrid :gridInstance="pair.inputGrid" :containerWidth="120" :containerHeight="120"
+                            :maxCellSize="20" />
                     </div>
                     <div class="grid-group">
                         <div class="grid-header">Example Output {{ index + 1 }}</div>
-                        <EditableGrid :gridInstance="pair.outputGrid" :containerWidth="180" :containerHeight="180"
-                            :maxCellSize="50" />
+                        <EditableGrid :gridInstance="pair.outputGrid" :containerWidth="120" :containerHeight="120"
+                            :maxCellSize="20" />
                     </div>
                 </div>
             </div>
@@ -163,18 +168,14 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyDown));
                 <div class="evaluation-grids-container">
                     <div class="grid-group test-input-group">
                         <h3 class="panel-title centered">Test Input</h3>
-                        <EditableGrid :gridInstance="taskLogic.currentInputGrid.value"
-                            :containerWidth="taskLogic.EDITION_GRID_CONTAINER_WIDTH"
-                            :containerHeight="taskLogic.EDITION_GRID_CONTAINER_HEIGHT"
-                            :maxCellSize="taskLogic.MAX_CELL_SIZE_CONFIG" :isInteractive="false" />
+                        <EditableGrid :gridInstance="taskLogic.currentInputGrid.value" :containerWidth="300"
+                            :containerHeight="300" :maxCellSize="30" :isInteractive="false" />
                     </div>
 
                     <div class="grid-group test-output-group">
                         <h3 class="panel-title centered">Test Output</h3>
                         <EditableGrid :gridInstance="taskLogic.currentOutputGrid.value" :isInteractive="true"
-                            :containerWidth="taskLogic.EDITION_GRID_CONTAINER_WIDTH"
-                            :containerHeight="taskLogic.EDITION_GRID_CONTAINER_HEIGHT"
-                            :maxCellSize="taskLogic.MAX_CELL_SIZE_CONFIG"
+                            :containerWidth="300" :containerHeight="300" :maxCellSize="30"
                             :allowSelect="taskLogic.selectedTool.value === 'select'"
                             :selectedCells="taskLogic.selectedCells.value" @cell-click="taskLogic.handleCellInteraction"
                             @cell-mousedown="taskLogic.handleCellInteraction"
@@ -183,73 +184,79 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyDown));
                             @selection-change="taskLogic.updateSelectedCellsOnOutputGrid" />
                     </div>
                 </div>
-            </div>
-            <!-- Toolbar and Controls -->
-            <div id="editor_controls_vue" class="panel controls-panel" v-show="!taskLogic.isWritingDescription.value">
-                <h3 class="panel-title">Controls</h3>
-                <div class="control-section">
-                    <label class="control-label">Tool:</label>
-                    <div class="tool-options">
-                        <button :class="{ active: taskLogic.selectedTool.value === 'edit' }"
-                            @click="taskLogic.selectedTool.value = 'edit'">Edit</button>
-                        <button :class="{ active: taskLogic.selectedTool.value === 'select' }"
-                            @click="taskLogic.selectedTool.value = 'select'">Select</button>
-                        <button :class="{ active: taskLogic.selectedTool.value === 'floodfill' }"
-                            @click="taskLogic.selectedTool.value = 'floodfill'">Flood Fill</button>
+
+                <!-- Toolbar and Controls - moved inside evaluation panel -->
+                <div id="editor_controls_vue" class="controls-section" v-show="!taskLogic.isWritingDescription.value">
+                    <h4 class="controls-title">Controls</h4>
+
+                    <div class="control-row">
+                        <label class="control-label">Tool:</label>
+                        <div class="tool-options">
+                            <button :class="{ active: taskLogic.selectedTool.value === 'edit' }"
+                                @click="taskLogic.selectedTool.value = 'edit'">Edit</button>
+                            <button :class="{ active: taskLogic.selectedTool.value === 'select' }"
+                                @click="taskLogic.selectedTool.value = 'select'">Select</button>
+                            <button :class="{ active: taskLogic.selectedTool.value === 'floodfill' }"
+                                @click="taskLogic.selectedTool.value = 'floodfill'">Flood Fill</button>
+                        </div>
                     </div>
-                </div>
-                <div class="control-section">
-                    <label class="control-label">Color:</label>
-                    <div class="color-picker">
-                        <span v-for="i in 10" :key="`color-${i - 1}`"
-                            :class="['symbol-preview', `symbol-${i - 1}`, { 'selected-symbol': taskLogic.selectedSymbol.value === i - 1 }]"
-                            @click="taskLogic.selectedSymbol.value = i - 1; taskLogic.selectedTool.value === 'select' && taskLogic.selectedCells.value.size > 0 ? taskLogic.changeColorOfSelectedOutputCells() : null">
-                        </span>
+
+                    <div class="control-row">
+                        <label class="control-label">Color:</label>
+                        <div class="color-picker">
+                            <span v-for="i in 10" :key="`color-${i - 1}`"
+                                :class="['symbol-preview', `symbol-${i - 1}`, { 'selected-symbol': taskLogic.selectedSymbol.value === i - 1 }]"
+                                @click="taskLogic.selectedSymbol.value = i - 1; taskLogic.selectedTool.value === 'select' && taskLogic.selectedCells.value.size > 0 ? taskLogic.changeColorOfSelectedOutputCells() : null">
+                            </span>
+                        </div>
                     </div>
-                </div>
-                <div class="control-section grid-size-controls">
-                    <label class="control-label">Output Grid Size:</label>
-                    <div>
-                        Height: <select v-model.number="taskLogic.outputGridHeight.value"
-                            @change="taskLogic.updateOutputGridSize(taskLogic.outputGridHeight.value, taskLogic.outputGridWidth.value)">
-                            <option v-for="h in 30" :key="h" :value="h">{{ h }}</option>
-                        </select>
-                        Width: <select v-model.number="taskLogic.outputGridWidth.value"
-                            @change="taskLogic.updateOutputGridSize(taskLogic.outputGridHeight.value, taskLogic.outputGridWidth.value)">
-                            <option v-for="w in 30" :key="w" :value="w">{{ w }}</option>
-                        </select>
+
+                    <div class="control-row grid-size-controls">
+                        <label class="control-label">Grid Size:</label>
+                        <div>
+                            Height: <select v-model.number="taskLogic.outputGridHeight.value"
+                                @change="taskLogic.updateOutputGridSize(taskLogic.outputGridHeight.value, taskLogic.outputGridWidth.value)">
+                                <option v-for="h in 30" :key="h" :value="h">{{ h }}</option>
+                            </select>
+                            Width: <select v-model.number="taskLogic.outputGridWidth.value"
+                                @change="taskLogic.updateOutputGridSize(taskLogic.outputGridHeight.value, taskLogic.outputGridWidth.value)">
+                                <option v-for="w in 30" :key="w" :value="w">{{ w }}</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
-                <div class="control-section action-buttons">
-                    <button @click="taskLogic.copyInputToOutput()">Copy Input</button>
-                    <button @click="taskLogic.resetOutputGrid()">Reset Output</button>
-                    <button @click="taskLogic.undoLastAction()">Undo</button>
-                    <button v-if="taskLogic.selectedTool.value === 'select'"
-                        @click="taskLogic.copyFromSelectedOutputCells()" title="Or Ctrl/Cmd+C">Copy Sel.</button>
-                    <button v-if="taskLogic.selectedTool.value === 'select'" @click="taskLogic.pasteToOutputCells()"
-                        title="Or Ctrl/Cmd+V">Paste Sel.</button>
-                </div>
-                <div class="control-section submit-section">
-                    <button @click="taskLogic.handleSubmitAttempt()" class="submit-button main-submit">Submit
-                        Solution</button>
-                    <button @click="taskLogic.autoSolve()" class="submit-button debug-button"
-                        title="For Testing Only">Auto-Solve</button>
+
+                    <div class="control-row action-buttons">
+                        <button @click="taskLogic.copyInputToOutput()">Copy Input</button>
+                        <button @click="taskLogic.resetOutputGrid()">Reset Grid</button>
+                        <button @click="taskLogic.undoLastAction()">Undo</button>
+                        <button @click="toggleHelpModal">Help</button>
+                    </div>
+
+                    <div class="control-row action-buttons" v-if="taskLogic.selectedTool.value === 'select'">
+                        <button @click="taskLogic.copyFromSelectedOutputCells()" title="Or Ctrl/Cmd+C">Copy
+                            Sel.</button>
+                        <button @click="taskLogic.pasteToOutputCells()" title="Or Ctrl/Cmd+V">Paste Sel.</button>
+                    </div>
+
+                    <div class="control-row submit-section">
+                        <button @click="taskLogic.handleSubmitAttempt()"
+                            class="submit-button main-submit">Submit</button>
+                        <button @click="taskLogic.autoSolve()" class="submit-button debug-button"
+                            title="For Testing Only">Auto-Solve</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-
         <!-- Solution Writing Area -->
-        <div v-if="taskLogic.isWritingDescription.value" id="write_solution_vue" class="panel description-panel">
+        <div v-if="taskLogic.isWritingDescription.value" id="write_solution_vue" class="description-panel">
             <h3 class="panel-title">Describe Your Solution</h3>
             <p class="description-prompt">{{ descriptionPromptText }}</p>
             <textarea v-model="localDescriptionModel" rows="5" placeholder="Type your description here..."></textarea>
             <button @click="handleDescriptionSubmit" class="submit-button">Submit Description</button>
         </div>
 
-        <!-- Help Button -->
-        <button @click="toggleHelpModal" class="help-button-fixed">?</button>
-        <!-- Help Modal (simplified, content needs to be filled from original) -->
+        <!-- Help Modal -->
         <div v-if="showHelp" class="modal-overlay" @click.self="toggleHelpModal">
             <div class="modal-content-viewer">
                 <div class="modal-header-viewer">
@@ -294,197 +301,280 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyDown));
 </template>
 
 <style scoped>
-/* --- General Layout & Panels --- */
+/* Responsive layout using viewport units and proportions */
 .arc-task-runner-view {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    padding: 15px;
+    width: 85vw;
+    /* Use 95% of viewport width */
+    max-width: 1430px;
+    /* Cap at original size for very large screens */
+    min-width: 1000px;
+    /* Minimum width to prevent breaking */
+    margin: 0 auto;
+    font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial;
+    font-weight: 300;
+    font-size: 16px;
     background-color: #f8f9fa;
-    /* Light page background */
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    min-height: 95vh;
+    min-height: auto;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 .info-bar {
     text-align: center;
-    padding: 10px;
-    background-color: #e9ecef;
+    margin-top: 2px;
+    margin-left: 10px;
+    height: 40px;
+    font-size: 18px;
+    background-color: #ffffff;
     border-radius: 6px;
-    font-weight: bold;
+    padding: 10px;
     margin-bottom: 10px;
-    font-size: 1.1em;
+    border: 1px solid #dee2e6;
 }
 
 .content-wrapper {
     display: flex;
-    flex-wrap: wrap;
-    /* Allow wrapping for smaller screens if controls go below */
-    gap: 15px;
-    flex-grow: 1;
+    gap: 1%;
+    /* Proportional gap */
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    /* Align to top to prevent overlap */
 }
 
 .panel {
-    background-color: #ffffff;
-    /* White background for panels */
-    border: 1px solid #dee2e6;
-    /* Light border for panels */
-    border-radius: 6px;
-    padding: 15px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    background-color: #d5d5d5;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 5px;
+    box-sizing: border-box;
 }
 
 .panel-title {
+    text-align: center;
+    background: white;
+    padding: 5px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 18px;
     margin-top: 0;
-    margin-bottom: 15px;
-    font-size: 1.2em;
-    color: #343a40;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
 }
 
 .panel-title.centered {
     text-align: center;
 }
 
-
+/* Proportional dimensions */
 .examples-panel {
-    width: 400px;
-    /* Fixed width for example pairs */
-    max-height: calc(85vh - 60px);
-    /* Adjust based on info-bar height */
+    width: 30%;
+    /* 30% of container width */
+    min-width: 350px;
+    /* Minimum to prevent crushing */
+    /* max-height: 800px; */
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-}
-
-.example-pair {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.example-pair:last-child {
-    border-bottom: none;
+    flex-shrink: 0;
+    /* Don't shrink below min-width */
 }
 
 .evaluation-panel {
-    flex-grow: 1;
-    /* Takes remaining space */
+    width: 68%;
+    /* 68% of container width */
+    min-width: 600px;
+    /* Minimum to prevent crushing */
     display: flex;
     flex-direction: column;
-    /* Stack grids above controls */
+    flex-shrink: 0;
+    /* Don't shrink below min-width */
 }
 
-.evaluation-grids-container {
+.example-pair {
+    min-height: 230px;
+    /* Use min-height for flexibility */
+    padding: 10px;
     display: flex;
-    gap: 15px;
-    margin-bottom: 15px;
-    /* Space before controls if they were below */
+    gap: 10px;
+    justify-content: space-between;
 }
-
 
 .grid-group {
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* Center the grid component if it's smaller */
+    flex: 1;
+    /* Share space equally */
+    min-width: 120px;
+    /* Minimum width for readability */
+}
+
+.grid-header {
+    text-align: center;
+    padding: 5px;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.evaluation-grids-container {
+    display: flex;
+    gap: 2%;
+    margin-bottom: 15px;
+    justify-content: space-between;
 }
 
 .test-input-group,
 .test-output-group {
-    flex: 1;
-    /* Share space equally */
-    min-width: 0;
-    /* Allow shrinking */
+    width: 48%;
+    /* Each takes ~48% of evaluation panel */
+    min-width: 250px;
+    /* Minimum for readability */
+    margin: 10px 0;
 }
 
-.grid-header {
+/* Controls styling with better spacing */
+.controls-section {
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    margin-top: 10px;
+    box-sizing: border-box;
+}
+
+.controls-title {
     font-weight: bold;
-    margin-bottom: 8px;
-    font-size: 0.95em;
-    color: #495057;
+    margin-bottom: 15px;
+    font-size: 18px;
+    margin-top: 0;
+    text-align: center;
 }
 
-
-.controls-panel {
-    width: 100%;
-    /* Full width if it wraps */
-    /* Or fixed width if always sidebar: width: 300px; */
-    max-height: calc(85vh - 60px);
-    overflow-y: auto;
-    order: 3;
-    /* Default order if in main flow */
-}
-
-/* If controls are a sidebar next to evaluation panel: */
-/* .content-wrapper { flex-wrap: nowrap; } */
-/* .evaluation-panel { width: auto; } /* Let it take space */
-/* .controls-panel { width: 280px; flex-shrink: 0; order: 2; margin-left:15px} */
-/* .examples-panel { order: 1;} */
-/* .description-panel { order: 4; width: 100%;} */
-
-.control-section {
-    margin-bottom: 20px;
+.control-row {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .control-label {
-    display: block;
     font-weight: bold;
     margin-bottom: 8px;
-    font-size: 1em;
+    font-size: 18px;
+    text-align: center;
+}
+
+.tool-options {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 .tool-options button,
 .action-buttons button,
 .submit-button {
-    padding: 8px 12px;
-    margin-right: 8px;
-    margin-bottom: 8px;
-    /* For wrapping */
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    background-color: #f8f9fa;
+    font-size: 16px;
+    /* Slightly smaller for better fit */
+    padding: 6px 12px;
+    margin: 2px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background-color: #0074d9;
+    color: white;
     cursor: pointer;
-    transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
 }
 
 .tool-options button.active,
 .tool-options button:hover,
-.action-buttons button:hover,
-.submit-button:hover {
-    background-color: #007bff;
-    color: white;
-    border-color: #007bff;
+.action-buttons button:hover {
+    background-color: #004b8d;
+    transform: translateY(1px);
 }
 
 .tool-options button.active {
-    background-color: #0056b3;
-    border-color: #0056b3;
-    color: white;
+    background-color: #004b8d;
 }
 
+/* Fixed color picker centering */
+.color-picker {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin: 10px 0;
+}
 
 .color-picker .symbol-preview {
-    display: inline-block;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     border: 1px solid #ccc;
-    margin-right: 4px;
-    margin-bottom: 4px;
     cursor: pointer;
-    vertical-align: middle;
-    border-radius: 3px;
+    border-radius: 2px;
+    flex-shrink: 0;
 }
 
 .color-picker .symbol-preview.selected-symbol {
     border: 2px solid orange;
-    box-shadow: 0 0 5px orange;
+    box-shadow: 0 0 3px orange;
 }
 
-/* Symbol colors - defined in EditableGrid.vue, but a fallback or direct style might be needed if :style binding is not used */
+.grid-size-controls {
+    text-align: center;
+}
+
+.grid-size-controls>div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.grid-size-controls select {
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+    font-size: 16px;
+    min-width: 60px;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex-direction: row;
+}
+
+.submit-section {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    margin-top: 15px;
+    flex-direction: row;
+}
+
+.main-submit {
+    background-color: rgb(28, 184, 65);
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    padding: 8px 16px;
+}
+
+.main-submit:hover {
+    background-color: rgb(0, 78, 0);
+}
+
+.debug-button {
+    background-color: #6c757d;
+    font-size: 14px;
+    padding: 4px 8px;
+}
+
+/* Symbol colors */
 .symbol-0 {
     background-color: #000000;
 }
@@ -525,108 +615,42 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyDown));
     background-color: #870C25;
 }
 
-
-.grid-size-controls select {
-    padding: 6px 8px;
-    border-radius: 4px;
-    border: 1px solid #ced4da;
-    margin-left: 5px;
-    margin-right: 15px;
-}
-
-.submit-section {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid #eee;
-}
-
-.main-submit {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
-    font-weight: bold;
-}
-
-.main-submit:hover {
-    background-color: #218838;
-    border-color: #1e7e34;
-}
-
-.debug-button {
-    font-size: 0.8em;
-    padding: 5px 8px;
-    background-color: #6c757d;
-    border-color: #6c757d;
-    color: white;
-}
-
-.debug-button:hover {
-    background-color: #5a6268;
-}
-
-
+/* Description panel */
 .description-panel {
-    margin-top: 15px;
-    /* Or handled by gap */
-    width: 100%;
-    /* Take full width if it's separate */
+    background: white;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 10px;
+    width: calc(100% - 20px);
+    box-sizing: border-box;
 }
 
 .description-prompt {
     font-style: italic;
-    color: #495057;
     margin-bottom: 10px;
 }
 
 .description-panel textarea {
     width: 100%;
     min-height: 100px;
-    padding: 10px;
-    border: 1px solid #ced4da;
+    padding: 5px;
+    border: 2px solid #ccc;
     border-radius: 4px;
+    background-color: #f8f8f8;
+    font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial;
+    font-size: 16px;
+    resize: none;
     box-sizing: border-box;
-    margin-bottom: 10px;
-    font-size: 1em;
 }
 
-.description-panel .submit-button {
-    background-color: #007bff;
-    color: white;
-}
-
-.description-panel .submit-button:hover {
-    background-color: #0056b3;
-}
-
-
-/* --- Help Modal --- (using -viewer suffix to avoid collision if old styles persist) */
-.help-button-fixed {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    font-size: 1.5em;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
+/* Modal styles */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.4);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -640,84 +664,78 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyDown));
     max-width: 700px;
     max-height: 85vh;
     overflow-y: auto;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-    display: flex;
-    flex-direction: column;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
 }
 
 .modal-header-viewer {
-    padding: 15px 20px;
-    background-color: #007bff;
+    padding: 2px 16px;
+    background-color: #0074d9;
     color: white;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-}
-
-.modal-header-viewer h3 {
-    margin: 0;
-    font-size: 1.3em;
 }
 
 .close-modal-viewer {
-    font-size: 1.8em;
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
     cursor: pointer;
-    line-height: 1;
+}
+
+.close-modal-viewer:hover {
+    color: white;
 }
 
 .modal-body-viewer {
-    padding: 20px;
+    padding: 2px 16px;
     line-height: 1.6;
-    color: #333;
 }
 
-.modal-body-viewer h4 {
-    margin-top: 15px;
-    margin-bottom: 8px;
-}
-
-.modal-body-viewer ul {
-    padding-left: 20px;
-    margin-bottom: 10px;
-}
-
-.modal-body-viewer li {
-    margin-bottom: 5px;
-}
-
-/* Responsive adjustments for smaller screens */
+/* Responsive behavior for smaller screens */
 @media (max-width: 1200px) {
-
-    /* Adjust breakpoint as needed */
-    .content-wrapper {
-        flex-direction: column;
-        /* Stack panels vertically */
+    .arc-task-runner-view {
+        width: 98vw;
+        min-width: 800px;
     }
 
-    .examples-panel,
-    .evaluation-panel,
-    .controls-panel {
-        width: 100%;
-        /* Full width for stacked panels */
-        max-height: none;
-        /* Allow full height when stacked */
+    .examples-panel {
+        width: 35%;
+        min-width: 300px;
+    }
+
+    .evaluation-panel {
+        width: 63%;
+        min-width: 500px;
     }
 
     .evaluation-grids-container {
         flex-direction: column;
-        /* Stack test input/output vertically */
         align-items: center;
-        /* Center them when stacked */
     }
 
     .test-input-group,
     .test-output-group {
+        width: 80%;
+        max-width: 400px;
+    }
+}
+
+@media (max-width: 900px) {
+    .content-wrapper {
+        flex-direction: column;
+    }
+
+    .examples-panel,
+    .evaluation-panel {
         width: 100%;
-        /* Full width for stacked grids */
-        max-width: 500px;
-        /* Limit max width if desired */
+        min-width: auto;
+    }
+
+    .test-input-group,
+    .test-output-group {
+        width: 90%;
+        max-width: 350px;
     }
 }
 </style>

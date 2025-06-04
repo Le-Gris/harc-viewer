@@ -6,17 +6,17 @@ const api = useViewAPI();
 
 const currentSlideIndex = ref(0);
 const slides = [
-    { title: "ARC Tutorial (1/12)", content: "In this experiment, you will complete a number of different tasks involving a series of colored rectangular grids...", image1: "/example-input-one-eval.png", image2: "/example-output-one-eval.png", computerArrow: true },
-    { title: "ARC Tutorial (2/12)", content: "For each task, you will be provided with a new Test Input, and your goal is to guess what the correct Test Output should be...", image1: "/test-input-eval.png", image2: "/blank-grid-eval.png", computerArrow: true },
-    { title: "ARC Tutorial (3/12)", content: "For this example, the particular rule is to create a checkerboard pattern...", image1: "/test-input-eval.png", image2: "/test-output-eval.png", computerArrow: true },
-    { title: "ARC Tutorial (4/12)", content: "Below is an image of the interface that you will be using...", imageWide: "/arc-interface-eval.png" },
-    { title: "ARC Tutorial (5/12)", content: "Changing the Grid Size and Copy from Input...", video: "/resize-and-copy-from-input-eval.mp4" },
-    { title: "ARC Tutorial (6/12)", content: "Using the Edit Tool...", video: "/edit-tool-eval.mp4" },
-    { title: "ARC Tutorial (7/12)", content: "Using the Select Tool to change color...", video: "/select-change-color-eval.mp4" },
-    { title: "ARC Tutorial (8/12)", content: "Using the Select Tool to Copy and Paste...", video: "/select-copy-paste-eval.mp4" },
-    { title: "ARC Tutorial (9/12)", content: "Using the Flood Fill Tool...", video: "/flood-fill-eval.mp4" },
-    { title: "ARC Tutorial (10/12)", content: "Using the Undo button...", video: "/undo-eval.mp4" },
-    { title: "ARC Tutorial (11/12)", content: "Submitting your solution. You will have three attempts for each task...", video: "/submit-eval.mp4" },
+    { title: "ARC Tutorial (1/12)", content: "In this experiment, you will complete a number of different tasks involving a series of colored rectangular grids...", image1: api.getPublicUrl("example-input-one-eval.png"), image2: api.getPublicUrl("example-output-one-eval.png"), computerArrow: true },
+    { title: "ARC Tutorial (2/12)", content: "For each task, you will be provided with a new Test Input, and your goal is to guess what the correct Test Output should be...", image1: api.getPublicUrl("test-input-eval.png"), image2: api.getPublicUrl("blank-grid-eval.png"), computerArrow: true },
+    { title: "ARC Tutorial (3/12)", content: "For this example, the particular rule is to create a checkerboard pattern...", image1: api.getPublicUrl("test-input-eval.png"), image2: api.getPublicUrl("test-output-eval.png"), computerArrow: true },
+    { title: "ARC Tutorial (4/12)", content: "Below is an image of the interface that you will be using...", imageWide: api.getPublicUrl("arc-interface-eval.png") },
+    { title: "ARC Tutorial (5/12)", content: "Changing the Grid Size and Copy from Input...", video: api.getPublicUrl("resize-and-copy-from-input-eval.mp4") },
+    { title: "ARC Tutorial (6/12)", content: "Using the Edit Tool...", video: api.getPublicUrl("edit-tool-eval.mp4") },
+    { title: "ARC Tutorial (7/12)", content: "Using the Select Tool to change color...", video: api.getPublicUrl("select-change-color-eval.mp4") },
+    { title: "ARC Tutorial (8/12)", content: "Using the Select Tool to Copy and Paste...", video: api.getPublicUrl("select-copy-paste-eval.mp4") },
+    { title: "ARC Tutorial (9/12)", content: "Using the Flood Fill Tool...", video: api.getPublicUrl("flood-fill-eval.mp4") },
+    { title: "ARC Tutorial (10/12)", content: "Using the Undo button...", video: api.getPublicUrl("undo-eval.mp4") },
+    { title: "ARC Tutorial (11/12)", content: "Submitting your solution. You will have three attempts for each task...", video: api.getPublicUrl("submit-eval.mp4") },
     { title: "ARC Tutorial (12/12)", content: "WARNING! If you refresh the experiment, you will be taken back to the beginning..." }
 ];
 
@@ -26,7 +26,7 @@ function next() {
     if (currentSlideIndex.value < slides.length - 1) {
         currentSlideIndex.value++;
     } else {
-        api.next(); // Go to the next view in the timeline (e.g., Tutorial Task)
+        api.goNextView(); // Go to the next view in the timeline (e.g., Tutorial Task)
     }
 }
 function prev() {
@@ -49,8 +49,8 @@ function goToSlide(index) {
             <div v-if="currentSlide.image1 && currentSlide.image2" class="tutorial-image-pair">
                 <img :src="currentSlide.image1" alt="Example Input">
                 <div v-if="currentSlide.computerArrow" class="computer-arrow-graphic">
-                    <img src="/comp-eval.svg" alt="Computer" class="comp-graphic">
-                    <img src="/arrow-eval.svg" alt="Arrow" class="arrow-graphic">
+                    <img :src="api.getPublicUrl('comp-eval.svg')" alt="Computer" class="comp-graphic">
+                    <img :src="api.getPublicUrl('arrow-eval.svg')" alt="Arrow" class="arrow-graphic">
                 </div>
                 <span v-else class="arrow-text">&rarr;</span>
                 <img :src="currentSlide.image2" alt="Example Output">

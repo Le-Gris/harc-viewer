@@ -23,7 +23,7 @@ function handleSubmitQuiz() {
 
     if (correct_q1 && correct_q2 && correct_q3 && correct_q4) {
         successMsg("Quiz completed correctly! Starting the main experiment.");
-        api.next(); // Proceed to the next view in the timeline
+        api.goNextView(); // Proceed to the next view in the timeline
     } else {
         errorMsg("One or more quiz answers were incorrect. Please review and try again.");
     }

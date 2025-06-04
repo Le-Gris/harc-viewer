@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, computed, ref, onMounted, watch } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 
 const props = defineProps({
     gridInstance: {
@@ -12,15 +12,15 @@ const props = defineProps({
     },
     maxCellSize: {
         type: Number,
-        default: 100,
+        default: 20, // Much smaller default
     },
     containerWidth: { // For fitting cells, pass the available width for the grid
         type: Number,
-        default: 400,
+        default: 120, // Much smaller container
     },
     containerHeight: { // For fitting cells, pass the available height for the grid
         type: Number,
-        default: 400,
+        default: 120, // Much smaller container
     },
     allowSelect: {
         type: Boolean,
@@ -40,10 +40,10 @@ const cellSize = computed(() => {
     if (!props.gridInstance || props.gridInstance.height === 0 || props.gridInstance.width === 0) {
         return props.maxCellSize;
     }
-    const candidateHeight = Math.floor((props.containerHeight - props.gridInstance.height) / props.gridInstance.height);
-    const candidateWidth = Math.floor((props.containerWidth - props.gridInstance.width) / props.gridInstance.width);
+    const candidateHeight = Math.floor(props.containerHeight / props.gridInstance.height);
+    const candidateWidth = Math.floor(props.containerWidth / props.gridInstance.width);
     let size = Math.min(candidateHeight, candidateWidth, props.maxCellSize);
-    return Math.max(5, size); // Ensure a minimum size
+    return Math.max(4, size); // Much smaller minimum size
 });
 
 const cellStyle = computed(() => ({
@@ -70,7 +70,7 @@ function handleMouseDown(event) {
     if (!props.isInteractive) return;
     const coords = getCellCoords(event);
     if (coords) {
-        emit('cell-mousedown', { ...coords, event });
+        emit('cell-mousedown', { type: 'mousedown', ...coords, event });
         if (props.allowSelect) {
             isSelecting.value = true;
             selectionStartCell.value = coords;
@@ -83,7 +83,7 @@ function handleMouseMove(event) {
     if (!props.isInteractive) return;
     const coords = getCellCoords(event);
     if (coords) {
-        emit('cell-mousemove', { ...coords, event });
+        emit('cell-mousemove', { type: 'mousemove', ...coords, event });
         if (props.allowSelect && isSelecting.value && selectionStartCell.value) {
             // Basic rectangular selection logic (can be improved)
             const tempSelected = new Set();
@@ -105,7 +105,7 @@ function handleMouseUp(event) {
     if (!props.isInteractive) return;
     const coords = getCellCoords(event);
     if (coords) {
-        emit('cell-mouseup', { ...coords, event });
+        emit('cell-mouseup', { type: 'mouseup', ...coords, event });
     }
     if (props.allowSelect && isSelecting.value) {
         isSelecting.value = false;
@@ -122,7 +122,7 @@ function handleCellClick(event) {
     }
     const coords = getCellCoords(event);
     if (coords) {
-        emit('cell-click', { ...coords, event });
+        emit('cell-click', { type: 'click', ...coords, event });
     }
 }
 
@@ -137,8 +137,7 @@ function isCellSelected(x, y) {
 
 <template>
     <div class="grid-container" ref="gridElementRef" @mouseup="handleMouseUp"
-        @mouseleave="props.allowSelect && isSelecting ? handleMouseUp($event) : null" <!-- Handle mouse leaving grid
-        during selection -->
+        @mouseleave="props.allowSelect && isSelecting ? handleMouseUp($event) : null">
         <div v-if="!gridInstance || gridInstance.height === 0" class="empty-grid-placeholder">
             Grid not loaded or empty.
         </div>
@@ -146,8 +145,7 @@ function isCellSelected(x, y) {
             <div v-for="(symbol, colIndex) in row" :key="`cell-${rowIndex}-${colIndex}`"
                 :class="['cell', `symbol-${symbol}`, { 'interactive': isInteractive, 'selected': isCellSelected(rowIndex, colIndex) }]"
                 :style="cellStyle" :data-x="rowIndex" :data-y="colIndex" :data-symbol="symbol" @click="handleCellClick"
-                @mousedown="handleMouseDown" @mousemove="handleMouseMove
-                ">
+                @mousedown="handleMouseDown" @mousemove="handleMouseMove">
             </div>
         </div>
     </div>
@@ -155,52 +153,60 @@ function isCellSelected(x, y) {
 
 <style scoped>
 .grid-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    /* Center rows if they don't fill width */
-    border: 1px solid #ccc;
+    display: inline-block;
+    /* Changed to inline-block for more compact sizing */
     user-select: none;
-    /* Prevent text selection during drag */
+    margin: 0;
+    padding: 0;
+    line-height: 0;
+    /* Remove any line height */
 }
 
 .empty-grid-placeholder {
-    padding: 20px;
+    padding: 5px;
     color: #777;
+    font-size: 12px;
 }
 
 .grid-row {
-    display: flex;
-    /* Removed clear: both, flexbox handles layout */
+    display: block;
+    /* Changed from flex to block for more compact layout */
+    height: auto;
+    line-height: 0;
+    font-size: 0;
+    /* Remove font-size spacing */
 }
 
 .cell {
-    border-left: 1px solid #808080;
-    border-top: 1px solid #808080;
+    display: inline-block;
+    /* Changed to inline-block for tighter packing */
+    border-right: 1px solid #808080;
+    /* Add right border */
+    border-bottom: 1px solid #808080;
+    /* Add bottom border */
     background-color: #808080;
-    /* Default for empty or symbol 0 if not styled */
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    vertical-align: top;
+    /* Align to top */
+}
+
+/* Remove borders from first row and first column to avoid double borders */
+.grid-row:first-child .cell {
+    border-top: 1px solid #808080;
+}
+
+.cell:first-child {
+    border-left: 1px solid #808080;
 }
 
 .cell.interactive {
     cursor: pointer;
 }
 
-.cell:first-child {
-    /* border-left: none; */
-    /* If you want outer border only from container */
-}
-
-.grid-row:first-child .cell {
-    /* border-top: none; */
-    /* If you want outer border only from container */
-}
-
 .cell.selected {
-    /* background-image: url(/black-twill.png), url(/brushed-alum.png); */
-    /* Requires assets in public */
     background-color: rgba(0, 116, 217, 0.3);
-    /* Example selection color */
     outline: 1px solid #0074D9;
 }
 
@@ -230,3 +236,27 @@ function isCellSelected(x, y) {
 }
 
 /* Yellow */
+.symbol-5 {
+    background-color: #AAAAAA;
+}
+
+/* Grey */
+.symbol-6 {
+    background-color: #F012BE;
+}
+
+/* Fuchsia */
+.symbol-7 {
+    background-color: #FF851B;
+}
+
+/* Orange */
+.symbol-8 {
+    background-color: #7FDBFF;
+}
+
+/* Teal */
+.symbol-9 {
+    background-color: #870C25;
+}
+</style>
