@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
-import useArcTaskLogic from '@/user/composables/useArcTaskLogic';
+import useArcTaskLogic from '@/user/composables/useArcTaskLogic.js';
 import EditableGrid from '@/user/components/EditableGrid.vue';
-import useViewAPI from '@/core/composables/useViewAPI'; // For api.goNextView()
+import useViewAPI from '@/core/composables/useViewAPI';
 import useSmileStore from "@/core/stores/smilestore";
 
 const props = defineProps({

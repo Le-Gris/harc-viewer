@@ -1,8 +1,8 @@
 import { ref, computed } from 'vue'
-import { Grid, fetchTaskData, verifySolution, createLogEntry } from '@/user/utils/arcUtils'
-import { EXPERIMENT_CONFIG, GRID_CONFIG } from '@/user/utils/arcConstants'
-import { errorMsg, infoMsg, successMsg } from '@/user/utils/uiUtils'
-import useGridManipulation from './useGridManipulation'
+import { Grid, fetchTaskData, verifySolution, createLogEntry } from '@/user/utils/arcUtils.js'
+import { EXPERIMENT_CONFIG, GRID_CONFIG } from '@/user/utils/arcConstants.js'
+import { errorMsg, infoMsg, successMsg } from '@/user/utils/uiUtils.js'
+import useGridManipulation from '@/user/composables/useGridManipulation.js'
 
 export default function useArcTaskLogic(taskFileName, taskIndex, datasetType, isTutorialMode, smilestore, viewApi) {
   // --- Task Specific State ---

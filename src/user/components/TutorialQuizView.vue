@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import useViewAPI from '@/core/composables/useViewAPI';
-import { errorMsg, successMsg } from '@/user/utils/uiUtils'; // Using the global notifications
+import { errorMsg, successMsg } from '@/user/utils/uiUtils.js';
 
 const api = useViewAPI();
 

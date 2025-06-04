@@ -19,13 +19,13 @@ import ArcTaskRunnerView from '@/user/components/ArcTaskRunnerView.vue'
 import ExperimentFinishedView from '@/user/components/ExperimentFinishedView.vue'
 
 // Import task file lists for randomization
-import trainingFileNames from '@/user/assets/arcTrainingFileNames'
-import evaluationFileNames from '@/user/assets/arcEvalFileNames'
+import trainingFileNames from '@/user/assets/arcTrainingFileNames.js'
+import evaluationFileNames from '@/user/assets/arcEvalFileNames.js'
 
 import useAPI from '@/core/composables/useAPI'
 import Timeline from '@/core/timeline'
-import { EXPERIMENT_CONFIG } from '@/user/utils/arcConstants'
-import { sampleWithoutReplacement } from '@/core/randomization'
+import { EXPERIMENT_CONFIG } from '@/user/utils/arcConstants.js'
+import { sampleWithoutReplacement } from '@/core/randomization.js'
 
 const api = useAPI()
 const timeline = new Timeline(api)
