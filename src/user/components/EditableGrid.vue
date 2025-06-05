@@ -206,8 +206,30 @@ function isCellSelected(x, y) {
 }
 
 .cell.selected {
-    background-color: rgba(0, 116, 217, 0.3);
-    outline: 1px solid #0074D9;
+    position: relative;
+    outline: 2px solid #0074D9;
+    outline-offset: -1px;
+}
+
+.cell.selected::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        repeating-linear-gradient(45deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 116, 217, 0.3) 2px,
+            rgba(0, 116, 217, 0.3) 4px),
+        repeating-linear-gradient(-45deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 116, 217, 0.3) 2px,
+            rgba(0, 116, 217, 0.3) 4px);
+    pointer-events: none;
 }
 
 /* Color definitions - ensure these match your original intent */

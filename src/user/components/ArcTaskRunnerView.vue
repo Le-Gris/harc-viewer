@@ -124,7 +124,7 @@ function handleKeyDown(event) {
         // This is for grid copy.
         if (taskLogic.selectedTool.value === 'select' && taskLogic.selectedCells.value.size > 0) {
             event.preventDefault();
-            taskLogic.copyFromSelectedOutputCells();
+            taskLogic.copyFromSelectedCells();
         }
     }
     if ((event.key === 'v' || event.key === 'V') && (event.ctrlKey || event.metaKey)) {
@@ -137,6 +137,31 @@ function handleKeyDown(event) {
 
 onMounted(() => window.addEventListener('keydown', handleKeyDown));
 onUnmounted(() => window.removeEventListener('keydown', handleKeyDown));
+
+// Helper function for color tooltips
+function getColorName(colorIndex) {
+    const colorNames = [
+        '(Black)', '(Blue)', '(Red)', '(Green)', '(Yellow)',
+        '(Gray)', '(Pink)', '(Orange)', '(Light Blue)', '(Brown)'
+    ];
+    return colorNames[colorIndex] || '';
+}
+
+const gridHeight = computed({
+    get: () => taskLogic.outputGridHeight.value,
+    set: (val) => {
+        const newVal = Number(val);
+        taskLogic.updateOutputGridSize(newVal, taskLogic.outputGridWidth.value);
+    }
+});
+
+const gridWidth = computed({
+    get: () => taskLogic.outputGridWidth.value,
+    set: (val) => {
+        const newVal = Number(val);
+        taskLogic.updateOutputGridSize(taskLogic.outputGridHeight.value, newVal);
+    }
+});
 
 </script>
 
@@ -169,7 +194,11 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyDown));
                     <div class="grid-group test-input-group">
                         <h3 class="panel-title centered">Test Input</h3>
                         <EditableGrid :gridInstance="taskLogic.currentInputGrid.value" :containerWidth="300"
-                            :containerHeight="300" :maxCellSize="30" :isInteractive="false" />
+                            :containerHeight="300" :maxCellSize="30"
+                            :isInteractive="taskLogic.selectedTool.value === 'select'"
+                            :allowSelect="taskLogic.selectedTool.value === 'select'"
+                            :selectedCells="taskLogic.selectedInputCells.value"
+                            @selection-change="taskLogic.updateSelectedCellsOnInputGrid" />
                     </div>
 
                     <div class="grid-group test-output-group">
@@ -185,27 +214,34 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyDown));
                     </div>
                 </div>
 
-                <!-- Toolbar and Controls - moved inside evaluation panel -->
+                <!-- Toolbar and Controls -->
                 <div id="editor_controls_vue" class="controls-section" v-show="!taskLogic.isWritingDescription.value">
-                    <h4 class="controls-title">Controls</h4>
+                    <!-- <h4 class="controls-title">Controls</h4> -->
 
                     <div class="control-row">
-                        <label class="control-label">Tool:</label>
+                        <label class="control-label">Select Tool:</label>
                         <div class="tool-options">
                             <button :class="{ active: taskLogic.selectedTool.value === 'edit' }"
-                                @click="taskLogic.selectedTool.value = 'edit'">Edit</button>
+                                @click="taskLogic.selectedTool.value = 'edit'" class="has-tooltip-arrow has-tooltip-top"
+                                data-tooltip="Click cells to change their color one at a time">Edit</button>
                             <button :class="{ active: taskLogic.selectedTool.value === 'select' }"
-                                @click="taskLogic.selectedTool.value = 'select'">Select</button>
+                                @click="taskLogic.selectedTool.value = 'select'"
+                                class="has-tooltip-arrow has-tooltip-top"
+                                data-tooltip="Click and drag to select multiple cells for bulk operations">Select</button>
                             <button :class="{ active: taskLogic.selectedTool.value === 'floodfill' }"
-                                @click="taskLogic.selectedTool.value = 'floodfill'">Flood Fill</button>
+                                @click="taskLogic.selectedTool.value = 'floodfill'"
+                                class="has-tooltip-arrow has-tooltip-top"
+                                data-tooltip="Click a cell to fill all connected cells of the same color">Flood
+                                Fill</button>
                         </div>
                     </div>
 
                     <div class="control-row">
-                        <label class="control-label">Color:</label>
+                        <label class="control-label">Select Color:</label>
                         <div class="color-picker">
                             <span v-for="i in 10" :key="`color-${i - 1}`"
-                                :class="['symbol-preview', `symbol-${i - 1}`, { 'selected-symbol': taskLogic.selectedSymbol.value === i - 1 }]"
+                                :class="['symbol-preview', `symbol-${i - 1}`, { 'selected-symbol': taskLogic.selectedSymbol.value === i - 1 }, 'has-tooltip-arrow', 'has-tooltip-top']"
+                                :data-tooltip="`Select color ${i - 1} ${getColorName(i - 1)}`"
                                 @click="taskLogic.selectedSymbol.value = i - 1; taskLogic.selectedTool.value === 'select' && taskLogic.selectedCells.value.size > 0 ? taskLogic.changeColorOfSelectedOutputCells() : null">
                             </span>
                         </div>
@@ -214,35 +250,47 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyDown));
                     <div class="control-row grid-size-controls">
                         <label class="control-label">Grid Size:</label>
                         <div>
-                            Height: <select v-model.number="taskLogic.outputGridHeight.value"
-                                @change="taskLogic.updateOutputGridSize(taskLogic.outputGridHeight.value, taskLogic.outputGridWidth.value)">
+                            Height: <select v-model="gridHeight" class="has-tooltip-arrow has-tooltip-top"
+                                data-tooltip="Change the height of the output grid">
                                 <option v-for="h in 30" :key="h" :value="h">{{ h }}</option>
                             </select>
-                            Width: <select v-model.number="taskLogic.outputGridWidth.value"
-                                @change="taskLogic.updateOutputGridSize(taskLogic.outputGridHeight.value, taskLogic.outputGridWidth.value)">
+                            Width: <select v-model="gridWidth" class="has-tooltip-arrow has-tooltip-top"
+                                data-tooltip="Change the width of the output grid">
                                 <option v-for="w in 30" :key="w" :value="w">{{ w }}</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="control-row action-buttons">
-                        <button @click="taskLogic.copyInputToOutput()">Copy Input</button>
-                        <button @click="taskLogic.resetOutputGrid()">Reset Grid</button>
-                        <button @click="taskLogic.undoLastAction()">Undo</button>
-                        <button @click="toggleHelpModal">Help</button>
+                        <button @click="taskLogic.copyInputToOutput()" class="has-tooltip-arrow has-tooltip-top"
+                            data-tooltip="Copy the test input grid to the output grid as a starting point">Copy
+                            Input</button>
+                        <button @click="taskLogic.resetOutputGrid" class="has-tooltip-arrow has-tooltip-top"
+                            data-tooltip="Clear the output grid and reset it to a 3x3 black grid">Reset Grid</button>
+                        <button @click="taskLogic.undoLastAction()" class="has-tooltip-arrow has-tooltip-top"
+                            data-tooltip="Undo the last action performed on the output grid">Undo</button>
+                        <button @click="toggleHelpModal" class="has-tooltip-arrow has-tooltip-top"
+                            data-tooltip="Show detailed help and instructions for using the interface">Help</button>
                     </div>
 
                     <div class="control-row action-buttons" v-if="taskLogic.selectedTool.value === 'select'">
-                        <button @click="taskLogic.copyFromSelectedOutputCells()" title="Or Ctrl/Cmd+C">Copy
-                            Sel.</button>
-                        <button @click="taskLogic.pasteToOutputCells()" title="Or Ctrl/Cmd+V">Paste Sel.</button>
+                        <button @click="taskLogic.copyFromSelectedCells()"
+                            :disabled="taskLogic.selectedCells.value.size === 0 && taskLogic.selectedInputCells.value.size === 0"
+                            class="has-tooltip-arrow has-tooltip-top"
+                            data-tooltip="Copy selected cells (Ctrl/Cmd+C)">Copy Selection</button>
+                        <button @click="taskLogic.pasteToOutputCells()"
+                            :disabled="taskLogic.copiedCellData.value.cells.length === 0 || taskLogic.selectedCells.value.size !== 1"
+                            class="has-tooltip-arrow has-tooltip-top"
+                            data-tooltip="Paste to Output Grid (Ctrl/Cmd+V)">Paste</button>
                     </div>
 
                     <div class="control-row submit-section">
                         <button @click="taskLogic.handleSubmitAttempt()"
-                            class="submit-button main-submit">Submit</button>
-                        <button @click="taskLogic.autoSolve()" class="submit-button debug-button"
-                            title="For Testing Only">Auto-Solve</button>
+                            class="submit-button main-submit has-tooltip-arrow has-tooltip-top"
+                            data-tooltip="Submit your current output grid as the solution">Submit</button>
+                        <button @click="taskLogic.autoSolve()"
+                            class="submit-button debug-button has-tooltip-arrow has-tooltip-top"
+                            data-tooltip="For Testing Only - Automatically solve this task">Auto-Solve</button>
                     </div>
                 </div>
             </div>
@@ -252,8 +300,11 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyDown));
         <div v-if="taskLogic.isWritingDescription.value" id="write_solution_vue" class="description-panel">
             <h3 class="panel-title">Describe Your Solution</h3>
             <p class="description-prompt">{{ descriptionPromptText }}</p>
-            <textarea v-model="localDescriptionModel" rows="5" placeholder="Type your description here..."></textarea>
-            <button @click="handleDescriptionSubmit" class="submit-button">Submit Description</button>
+            <textarea v-model="localDescriptionModel" rows="5" placeholder="Type your description here..."
+                class="has-tooltip-arrow has-tooltip-right"
+                data-tooltip="Describe your reasoning and solution approach"></textarea>
+            <button @click="handleDescriptionSubmit" class="submit-button has-tooltip-arrow has-tooltip-top"
+                data-tooltip="Submit your description and continue to the next task">Submit Description</button>
         </div>
 
         <!-- Help Modal -->

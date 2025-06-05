@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { Grid, fetchTaskData, verifySolution, createLogEntry } from '@/user/utils/arcUtils.js'
 import { EXPERIMENT_CONFIG, GRID_CONFIG } from '@/user/utils/arcConstants.js'
 import { errorMsg, infoMsg, successMsg } from '@/user/utils/uiUtils.js'
@@ -34,16 +34,19 @@ export default function useArcTaskLogic(taskFileName, taskIndex, datasetType, is
     selectedTool,
     selectedSymbol,
     selectedCells,
+    selectedInputCells,
     updateOutputGridSize,
     resetOutputGrid,
     copyInputToOutput,
     undoLastAction,
     handleCellInteraction,
     updateSelectedCells,
+    updateSelectedInputCells,
     changeColorOfSelectedCells,
     copySelectedCells,
     pasteCopiedCells,
     autoSolve,
+    copiedCellData,
   } = useGridManipulation(logActionInternal)
 
   // === LOGGING ===
@@ -111,6 +114,7 @@ export default function useArcTaskLogic(taskFileName, taskIndex, datasetType, is
     firstDescriptionText.value = ''
     finalDescriptionText.value = ''
     selectedCells.value.clear()
+    selectedInputCells.value.clear()
     previousSubmittedOutputGridString.value = ''
 
     taskData.value = await fetchTaskData(taskName.value, datasetType, viewApi)
@@ -214,8 +218,12 @@ export default function useArcTaskLogic(taskFileName, taskIndex, datasetType, is
     updateSelectedCells(newSelection)
   }
 
-  function copyFromSelectedOutputCells() {
-    copySelectedCells()
+  function updateSelectedCellsOnInputGrid(newSelection) {
+    updateSelectedInputCells(newSelection)
+  }
+
+  function copyFromSelectedCells() {
+    copySelectedCells(currentInputGrid.value)
   }
 
   function pasteToOutputCells() {
@@ -234,6 +242,16 @@ export default function useArcTaskLogic(taskFileName, taskIndex, datasetType, is
     autoSolve(testPairForTask.value?.output)
   }
 
+  function resetOutputGridWrapper() {
+    resetOutputGrid()
+  }
+
+  // Add debugging right after the refs are destructured
+  console.log('Initial grid dimensions:', {
+    height: outputGridHeight.value,
+    width: outputGridWidth.value,
+  })
+
   return {
     // Task Info
     taskName,
@@ -251,6 +269,8 @@ export default function useArcTaskLogic(taskFileName, taskIndex, datasetType, is
     outputGridHeight,
     outputGridWidth,
     selectedCells,
+    selectedInputCells,
+    copiedCellData,
     isWritingDescription,
     isFirstDescriptionAttemptForTask,
     firstDescriptionText,
@@ -264,13 +284,14 @@ export default function useArcTaskLogic(taskFileName, taskIndex, datasetType, is
     // Methods
     loadTask,
     updateOutputGridSize,
-    resetOutputGrid,
+    resetOutputGrid: resetOutputGridWrapper,
     copyInputToOutput: copyInputToOutputWrapper,
     undoLastAction,
     handleCellInteraction: handleCellInteractionWrapper,
     updateSelectedCellsOnOutputGrid,
+    updateSelectedCellsOnInputGrid,
     changeColorOfSelectedOutputCells,
-    copyFromSelectedOutputCells,
+    copyFromSelectedCells,
     pasteToOutputCells,
     handleSubmitAttempt,
     submitTaskDescription,
