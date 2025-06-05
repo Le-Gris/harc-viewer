@@ -1,4 +1,4 @@
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref } from 'vue'
 import { Grid, fetchTaskData, verifySolution, createLogEntry } from '@/user/utils/arcUtils.js'
 import { EXPERIMENT_CONFIG, GRID_CONFIG } from '@/user/utils/arcConstants.js'
 import { errorMsg, infoMsg, successMsg } from '@/user/utils/uiUtils.js'
@@ -141,10 +141,18 @@ export default function useArcTaskLogic(taskFileName, taskIndex, datasetType, is
     }
     previousSubmittedOutputGridString.value = currentGridStr
 
+    // First check if the solution is correct
+    isSolved.value = verifySolution(testPairForTask.value?.output, currentOutputGrid.value)
+    logActionInternal('submit_solution_check', {
+      attemptNumber: currentAttempt.value,
+      isCorrect: isSolved.value,
+    })
+
     if (isFirstDescriptionAttemptForTask.value && !isTutorial.value) {
+      // Always get first description before revealing if correct
       isWritingDescription.value = true
       logActionInternal('prompt_first_description')
-      infoMsg('Please describe your approach before we check your solution.')
+      infoMsg('Please describe your approach.')
       return
     }
     checkAndProcessSubmittedSolution()
@@ -156,44 +164,58 @@ export default function useArcTaskLogic(taskFileName, taskIndex, datasetType, is
       return
     }
 
-    if (isFirstDescriptionAttemptForTask.value && !isTutorial.value) {
+    if (isFirstDescriptionAttemptForTask.value) {
+      // This is their first description
       firstDescriptionText.value = descriptionText
       logActionInternal('submit_first_description', { description: descriptionText })
       isFirstDescriptionAttemptForTask.value = false
       isWritingDescription.value = false
-      checkAndProcessSubmittedSolution()
+
+      if (isSolved.value) {
+        // Solved on first try: Copy first description as final, show success, and proceed
+        finalDescriptionText.value = descriptionText
+        logActionInternal('submit_final_description', { description: descriptionText })
+        successMsg('Correct! Your solution matches.')
+        finishTask()
+      } else {
+        // Not solved on first try: Show error and continue
+        errorMsg(
+          `Incorrect. Please try again. ${EXPERIMENT_CONFIG.MAX_ATTEMPTS_PER_TASK - currentAttempt.value} attempts left.`
+        )
+        currentAttempt.value++
+      }
     } else {
+      // This is their final description
       finalDescriptionText.value = descriptionText
       logActionInternal('submit_final_description', { description: descriptionText })
       isWritingDescription.value = false
+
+      if (isSolved.value) {
+        successMsg('Correct! Your solution matches.')
+      } else {
+        errorMsg(`Task not solved in ${EXPERIMENT_CONFIG.MAX_ATTEMPTS_PER_TASK} attempts.`)
+      }
       finishTask()
     }
   }
 
   function checkAndProcessSubmittedSolution() {
-    isSolved.value = verifySolution(testPairForTask.value?.output, currentOutputGrid.value)
-    logActionInternal('submit_solution_check', {
-      attemptNumber: currentAttempt.value,
-      isCorrect: isSolved.value,
-    })
-
     if (isSolved.value) {
-      successMsg('Correct! Your solution matches.')
+      // Solved after first attempt: Ask for final description
       isWritingDescription.value = true
-      infoMsg(
-        isTutorial.value
-          ? 'Tutorial solved! Please provide the final description.'
-          : 'Task solved! Please describe your solution.'
-      )
+      if (isTutorial.value) {
+        infoMsg('Tutorial solved!')
+      }
     } else {
       currentAttempt.value++
       if (currentAttempt.value > EXPERIMENT_CONFIG.MAX_ATTEMPTS_PER_TASK) {
-        errorMsg(`Incorrect. You have used all ${EXPERIMENT_CONFIG.MAX_ATTEMPTS_PER_TASK} attempts for this task.`)
+        // Failed all attempts: Ask for final description
         isWritingDescription.value = true
         infoMsg('Please describe what you thought the solution was.')
       } else {
+        // Still have attempts left
         errorMsg(
-          `Incorrect. Please try again. Attempt ${currentAttempt.value} of ${EXPERIMENT_CONFIG.MAX_ATTEMPTS_PER_TASK}.`
+          `Incorrect. Please try again. ${EXPERIMENT_CONFIG.MAX_ATTEMPTS_PER_TASK - currentAttempt.value + 1} attempts left.`
         )
       }
     }

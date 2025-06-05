@@ -1,11 +1,11 @@
 // Simple notification system (can be expanded with a proper UI component)
-export function showNotification(message, type = 'info', duration = 5000) {
+export function showNotification(message, type = 'info', duration = 3000) {
   // In a real app, you'd integrate this with a notification component system
   console.log(`[${type.toUpperCase()}] ${message}`)
   const notificationElement = document.createElement('div')
   notificationElement.textContent = message
   notificationElement.style.position = 'fixed'
-  notificationElement.style.bottom = '20px'
+  notificationElement.style.bottom = '50px'
   notificationElement.style.left = '50%'
   notificationElement.style.transform = 'translateX(-50%)'
   notificationElement.style.padding = '10px 20px'

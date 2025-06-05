@@ -89,14 +89,10 @@ const infoBarText = computed(() => {
 const descriptionPromptText = computed(() => {
     if (!taskLogic.isWritingDescription.value) return "";
     if (props.isTutorialMode) {
-        // Simplified tutorial description prompt
-        return "Please describe your solution for the tutorial task. Example: 'Create a checkerboard pattern.'";
+        return "Before you receive feedback, you will be asked to describe your solution. After you submit either three incorrect solutions or one correct solution you will be asked for a final description. If you get it right on the first attempt you will not be asked for another description. For this tutorial please write the following solution to this task: <strong>Create a checkerboard pattern by alternating between the two colors in each row.</strong> This solution is approximately the length and generality we hope for in your responses. When you are done, please press the 'Submit description' button to continue.";
     }
-    if (taskLogic.isFirstDescriptionAttemptForTask.value) {
-        return "Please describe what you think the rule is to transform the input to the output. Press 'Submit Description' to continue.";
-    }
-    if (taskLogic.isSolved.value) {
-        return "Correct! Please describe your solution. This will be shown to another participant.";
+    if (taskLogic.isFirstDescriptionAttemptForTask.value | taskLogic.isSolved.value) {
+        return "Please describe what you thought the rule was to transform the input to the output for this task. When you are done, please press the 'Submit Description' button to continue.";
     }
     return "You've used all attempts. Please describe what you thought the rule was.";
 });
@@ -177,13 +173,13 @@ const gridWidth = computed({
                 <div v-for="(pair, index) in trainPairsForDisplay" :key="pair.id" class="example-pair">
                     <div class="grid-group">
                         <div class="grid-header">Example Input {{ index + 1 }}</div>
-                        <EditableGrid :gridInstance="pair.inputGrid" :containerWidth="120" :containerHeight="120"
-                            :maxCellSize="20" />
+                        <EditableGrid :gridInstance="pair.inputGrid" :containerWidth="200" :containerHeight="200"
+                            :maxCellSize="30" />
                     </div>
                     <div class="grid-group">
                         <div class="grid-header">Example Output {{ index + 1 }}</div>
-                        <EditableGrid :gridInstance="pair.outputGrid" :containerWidth="120" :containerHeight="120"
-                            :maxCellSize="20" />
+                        <EditableGrid :gridInstance="pair.outputGrid" :containerWidth="200" :containerHeight="200"
+                            :maxCellSize="30" />
                     </div>
                 </div>
             </div>
@@ -215,96 +211,100 @@ const gridWidth = computed({
                 </div>
 
                 <!-- Toolbar and Controls -->
-                <div id="editor_controls_vue" class="controls-section" v-show="!taskLogic.isWritingDescription.value">
-                    <!-- <h4 class="controls-title">Controls</h4> -->
+                <div id="editor_controls_vue" class="controls-section">
+                    <!-- Description Panel -->
+                    <div v-if="taskLogic.isWritingDescription.value" id="write_solution_vue">
+                        <h3 class="panel-title">Describe Your Solution</h3>
+                        <p class="description-prompt">{{ descriptionPromptText }}</p>
+                        <textarea v-model="localDescriptionModel" rows="5" placeholder="Type your description here..."
+                            class="has-tooltip-arrow has-tooltip-right"
+                            data-tooltip="Describe your reasoning and solution approach"></textarea>
+                        <button @click="handleDescriptionSubmit" class="submit-button has-tooltip-arrow has-tooltip-top"
+                            data-tooltip="Submit your description and continue to the next task">Submit
+                            Description</button>
+                    </div>
 
-                    <div class="control-row">
-                        <label class="control-label">Select Tool:</label>
-                        <div class="tool-options">
-                            <button :class="{ active: taskLogic.selectedTool.value === 'edit' }"
-                                @click="taskLogic.selectedTool.value = 'edit'" class="has-tooltip-arrow has-tooltip-top"
-                                data-tooltip="Click cells to change their color one at a time">Edit</button>
-                            <button :class="{ active: taskLogic.selectedTool.value === 'select' }"
-                                @click="taskLogic.selectedTool.value = 'select'"
+                    <!-- Original Controls (shown when not writing description) -->
+                    <div v-show="!taskLogic.isWritingDescription.value">
+                        <div class="control-row">
+                            <label class="control-label">Select Tool:</label>
+                            <div class="tool-options">
+                                <button :class="{ active: taskLogic.selectedTool.value === 'edit' }"
+                                    @click="taskLogic.selectedTool.value = 'edit'"
+                                    class="has-tooltip-arrow has-tooltip-top"
+                                    data-tooltip="Click cells to change their color one at a time">Edit</button>
+                                <button :class="{ active: taskLogic.selectedTool.value === 'select' }"
+                                    @click="taskLogic.selectedTool.value = 'select'"
+                                    class="has-tooltip-arrow has-tooltip-top"
+                                    data-tooltip="Click and drag to select multiple cells for bulk operations">Select</button>
+                                <button :class="{ active: taskLogic.selectedTool.value === 'floodfill' }"
+                                    @click="taskLogic.selectedTool.value = 'floodfill'"
+                                    class="has-tooltip-arrow has-tooltip-top"
+                                    data-tooltip="Click a cell to fill all connected cells of the same color">Flood
+                                    Fill</button>
+                            </div>
+                        </div>
+
+                        <div class="control-row">
+                            <label class="control-label">Select Color:</label>
+                            <div class="color-picker">
+                                <span v-for="i in 10" :key="`color-${i - 1}`"
+                                    :class="['symbol-preview', `symbol-${i - 1}`, { 'selected-symbol': taskLogic.selectedSymbol.value === i - 1 }, 'has-tooltip-arrow', 'has-tooltip-top']"
+                                    :data-tooltip="`Select color ${i - 1} ${getColorName(i - 1)}`"
+                                    @click="taskLogic.selectedSymbol.value = i - 1; taskLogic.selectedTool.value === 'select' && taskLogic.selectedCells.value.size > 0 ? taskLogic.changeColorOfSelectedOutputCells() : null">
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="control-row grid-size-controls">
+                            <label class="control-label">Grid Size:</label>
+                            <div>
+                                Height: <select v-model="gridHeight" class="has-tooltip-arrow has-tooltip-top"
+                                    data-tooltip="Change the height of the output grid">
+                                    <option v-for="h in 30" :key="h" :value="h">{{ h }}</option>
+                                </select>
+                                Width: <select v-model="gridWidth" class="has-tooltip-arrow has-tooltip-top"
+                                    data-tooltip="Change the width of the output grid">
+                                    <option v-for="w in 30" :key="w" :value="w">{{ w }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="control-row action-buttons">
+                            <button @click="taskLogic.copyInputToOutput()" class="has-tooltip-arrow has-tooltip-top"
+                                data-tooltip="Copy the test input grid to the output grid as a starting point">Copy
+                                Input</button>
+                            <button @click="taskLogic.resetOutputGrid" class="has-tooltip-arrow has-tooltip-top"
+                                data-tooltip="Clear the output grid and reset it to a 3x3 black grid">Reset
+                                Grid</button>
+                            <button @click="taskLogic.undoLastAction()" class="has-tooltip-arrow has-tooltip-top"
+                                data-tooltip="Undo the last action performed on the output grid">Undo</button>
+                            <button @click="toggleHelpModal" class="has-tooltip-arrow has-tooltip-top"
+                                data-tooltip="Show detailed help and instructions for using the interface">Help</button>
+                        </div>
+
+                        <div class="control-row action-buttons" v-if="taskLogic.selectedTool.value === 'select'">
+                            <button @click="taskLogic.copyFromSelectedCells()"
+                                :disabled="taskLogic.selectedCells.value.size === 0 && taskLogic.selectedInputCells.value.size === 0"
                                 class="has-tooltip-arrow has-tooltip-top"
-                                data-tooltip="Click and drag to select multiple cells for bulk operations">Select</button>
-                            <button :class="{ active: taskLogic.selectedTool.value === 'floodfill' }"
-                                @click="taskLogic.selectedTool.value = 'floodfill'"
+                                data-tooltip="Copy selected cells (Ctrl/Cmd+C)">Copy Selection</button>
+                            <button @click="taskLogic.pasteToOutputCells()"
+                                :disabled="taskLogic.copiedCellData.value.cells.length === 0 || taskLogic.selectedCells.value.size !== 1"
                                 class="has-tooltip-arrow has-tooltip-top"
-                                data-tooltip="Click a cell to fill all connected cells of the same color">Flood
-                                Fill</button>
+                                data-tooltip="Paste to Output Grid (Ctrl/Cmd+V)">Paste</button>
                         </div>
-                    </div>
 
-                    <div class="control-row">
-                        <label class="control-label">Select Color:</label>
-                        <div class="color-picker">
-                            <span v-for="i in 10" :key="`color-${i - 1}`"
-                                :class="['symbol-preview', `symbol-${i - 1}`, { 'selected-symbol': taskLogic.selectedSymbol.value === i - 1 }, 'has-tooltip-arrow', 'has-tooltip-top']"
-                                :data-tooltip="`Select color ${i - 1} ${getColorName(i - 1)}`"
-                                @click="taskLogic.selectedSymbol.value = i - 1; taskLogic.selectedTool.value === 'select' && taskLogic.selectedCells.value.size > 0 ? taskLogic.changeColorOfSelectedOutputCells() : null">
-                            </span>
+                        <div class="control-row submit-section">
+                            <button @click="taskLogic.handleSubmitAttempt()"
+                                class="submit-button main-submit has-tooltip-arrow has-tooltip-top"
+                                data-tooltip="Submit your current output grid as the solution">Submit</button>
+                            <button @click="taskLogic.autoSolve()"
+                                class="submit-button debug-button has-tooltip-arrow has-tooltip-top"
+                                data-tooltip="For Testing Only - Automatically solve this task">Auto-Solve</button>
                         </div>
-                    </div>
-
-                    <div class="control-row grid-size-controls">
-                        <label class="control-label">Grid Size:</label>
-                        <div>
-                            Height: <select v-model="gridHeight" class="has-tooltip-arrow has-tooltip-top"
-                                data-tooltip="Change the height of the output grid">
-                                <option v-for="h in 30" :key="h" :value="h">{{ h }}</option>
-                            </select>
-                            Width: <select v-model="gridWidth" class="has-tooltip-arrow has-tooltip-top"
-                                data-tooltip="Change the width of the output grid">
-                                <option v-for="w in 30" :key="w" :value="w">{{ w }}</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="control-row action-buttons">
-                        <button @click="taskLogic.copyInputToOutput()" class="has-tooltip-arrow has-tooltip-top"
-                            data-tooltip="Copy the test input grid to the output grid as a starting point">Copy
-                            Input</button>
-                        <button @click="taskLogic.resetOutputGrid" class="has-tooltip-arrow has-tooltip-top"
-                            data-tooltip="Clear the output grid and reset it to a 3x3 black grid">Reset Grid</button>
-                        <button @click="taskLogic.undoLastAction()" class="has-tooltip-arrow has-tooltip-top"
-                            data-tooltip="Undo the last action performed on the output grid">Undo</button>
-                        <button @click="toggleHelpModal" class="has-tooltip-arrow has-tooltip-top"
-                            data-tooltip="Show detailed help and instructions for using the interface">Help</button>
-                    </div>
-
-                    <div class="control-row action-buttons" v-if="taskLogic.selectedTool.value === 'select'">
-                        <button @click="taskLogic.copyFromSelectedCells()"
-                            :disabled="taskLogic.selectedCells.value.size === 0 && taskLogic.selectedInputCells.value.size === 0"
-                            class="has-tooltip-arrow has-tooltip-top"
-                            data-tooltip="Copy selected cells (Ctrl/Cmd+C)">Copy Selection</button>
-                        <button @click="taskLogic.pasteToOutputCells()"
-                            :disabled="taskLogic.copiedCellData.value.cells.length === 0 || taskLogic.selectedCells.value.size !== 1"
-                            class="has-tooltip-arrow has-tooltip-top"
-                            data-tooltip="Paste to Output Grid (Ctrl/Cmd+V)">Paste</button>
-                    </div>
-
-                    <div class="control-row submit-section">
-                        <button @click="taskLogic.handleSubmitAttempt()"
-                            class="submit-button main-submit has-tooltip-arrow has-tooltip-top"
-                            data-tooltip="Submit your current output grid as the solution">Submit</button>
-                        <button @click="taskLogic.autoSolve()"
-                            class="submit-button debug-button has-tooltip-arrow has-tooltip-top"
-                            data-tooltip="For Testing Only - Automatically solve this task">Auto-Solve</button>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Solution Writing Area -->
-        <div v-if="taskLogic.isWritingDescription.value" id="write_solution_vue" class="description-panel">
-            <h3 class="panel-title">Describe Your Solution</h3>
-            <p class="description-prompt">{{ descriptionPromptText }}</p>
-            <textarea v-model="localDescriptionModel" rows="5" placeholder="Type your description here..."
-                class="has-tooltip-arrow has-tooltip-right"
-                data-tooltip="Describe your reasoning and solution approach"></textarea>
-            <button @click="handleDescriptionSubmit" class="submit-button has-tooltip-arrow has-tooltip-top"
-                data-tooltip="Submit your description and continue to the next task">Submit Description</button>
         </div>
 
         <!-- Help Modal -->
@@ -439,11 +439,9 @@ const gridWidth = computed({
 }
 
 .example-pair {
-    min-height: 230px;
-    /* Use min-height for flexibility */
-    padding: 10px;
+    padding: 5px;
     display: flex;
-    gap: 10px;
+    gap: 5px;
     justify-content: space-between;
 }
 
@@ -452,15 +450,13 @@ const gridWidth = computed({
     flex-direction: column;
     align-items: center;
     flex: 1;
-    /* Share space equally */
     min-width: 120px;
-    /* Minimum width for readability */
 }
 
 .grid-header {
     text-align: center;
-    padding: 5px;
-    margin-bottom: 5px;
+    padding: 3px;
+    margin-bottom: 3px;
     font-weight: bold;
 }
 
@@ -667,31 +663,57 @@ const gridWidth = computed({
 }
 
 /* Description panel */
-.description-panel {
+#write_solution_vue {
     background: white;
-    border-radius: 6px;
     padding: 15px;
-    margin: 10px;
-    width: calc(100% - 20px);
+    border-radius: 6px;
     box-sizing: border-box;
+}
+
+#write_solution_vue .panel-title {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: bold;
 }
 
 .description-prompt {
     font-style: italic;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    text-align: center;
+    line-height: 1.4;
 }
 
-.description-panel textarea {
+#write_solution_vue textarea {
     width: 100%;
-    min-height: 100px;
-    padding: 5px;
+    min-height: 120px;
+    padding: 10px;
     border: 2px solid #ccc;
     border-radius: 4px;
     background-color: #f8f8f8;
     font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial;
     font-size: 16px;
-    resize: none;
+    resize: vertical;
+    margin-bottom: 15px;
     box-sizing: border-box;
+}
+
+#write_solution_vue .submit-button {
+    display: block;
+    width: 200px;
+    margin: 0 auto;
+    padding: 10px 20px;
+    background-color: rgb(28, 184, 65);
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#write_solution_vue .submit-button:hover {
+    background-color: rgb(22, 160, 56);
 }
 
 /* Modal styles */

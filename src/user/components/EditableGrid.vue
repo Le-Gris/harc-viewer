@@ -154,12 +154,14 @@ function isCellSelected(x, y) {
 <style scoped>
 .grid-container {
     display: inline-block;
-    /* Changed to inline-block for more compact sizing */
     user-select: none;
     margin: 0;
     padding: 0;
     line-height: 0;
-    /* Remove any line height */
+    white-space: nowrap;
+    /* Add this to prevent row wrapping */
+    overflow: hidden;
+    /* Add this to prevent overflow */
 }
 
 .empty-grid-placeholder {
@@ -170,26 +172,26 @@ function isCellSelected(x, y) {
 
 .grid-row {
     display: block;
-    /* Changed from flex to block for more compact layout */
     height: auto;
     line-height: 0;
     font-size: 0;
-    /* Remove font-size spacing */
+    white-space: nowrap;
+    /* Add this to prevent cells from wrapping */
 }
 
 .cell {
     display: inline-block;
-    /* Changed to inline-block for tighter packing */
     border-right: 1px solid #808080;
-    /* Add right border */
     border-bottom: 1px solid #808080;
-    /* Add bottom border */
     background-color: #808080;
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     vertical-align: top;
-    /* Align to top */
+    min-width: 4px;
+    /* Add minimum width constraint */
+    min-height: 4px;
+    /* Add minimum height constraint */
 }
 
 /* Remove borders from first row and first column to avoid double borders */
