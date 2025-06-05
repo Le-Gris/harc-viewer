@@ -82,7 +82,7 @@ const infoBarText = computed(() => {
     let text = props.isTutorialMode ? `Tutorial Task: ${props.taskFileName}` :
         `Task ${props.taskNumber || '-'}/${props.totalTasks || '-'}`;
     text += ` | Attempt: ${taskLogic.currentAttempt.value}/${taskLogic.MAX_ATTEMPTS}`;
-    if (taskLogic.isSolved.value) text += " (Solved)";
+    // if (taskLogic.isSolved.value) text += " (Solved)";
     return text;
 });
 
@@ -215,11 +215,12 @@ const gridWidth = computed({
                     <!-- Description Panel -->
                     <div v-if="taskLogic.isWritingDescription.value" id="write_solution_vue">
                         <h3 class="panel-title">Describe Your Solution</h3>
-                        <p class="description-prompt">{{ descriptionPromptText }}</p>
+                        <p class="description-prompt" v-html="descriptionPromptText"></p>
                         <textarea v-model="localDescriptionModel" rows="5" placeholder="Type your description here..."
                             class="has-tooltip-arrow has-tooltip-right"
                             data-tooltip="Describe your reasoning and solution approach"></textarea>
-                        <button @click="handleDescriptionSubmit" class="submit-button has-tooltip-arrow has-tooltip-top"
+                        <button @click="handleDescriptionSubmit"
+                            class="button is-success has-tooltip-arrow has-tooltip-top"
                             data-tooltip="Submit your description and continue to the next task">Submit
                             Description</button>
                     </div>
@@ -296,7 +297,7 @@ const gridWidth = computed({
 
                         <div class="control-row submit-section">
                             <button @click="taskLogic.handleSubmitAttempt()"
-                                class="submit-button main-submit has-tooltip-arrow has-tooltip-top"
+                                class="button is-success main-submit has-tooltip-arrow has-tooltip-top"
                                 data-tooltip="Submit your current output grid as the solution">Submit</button>
                             <button @click="taskLogic.autoSolve()"
                                 class="submit-button debug-button has-tooltip-arrow has-tooltip-top"
@@ -698,7 +699,7 @@ const gridWidth = computed({
     box-sizing: border-box;
 }
 
-#write_solution_vue .submit-button {
+/* #write_solution_vue .submit-button {
     display: block;
     width: 200px;
     margin: 0 auto;
@@ -710,11 +711,11 @@ const gridWidth = computed({
     border: none;
     border-radius: 4px;
     cursor: pointer;
-}
+} */
 
-#write_solution_vue .submit-button:hover {
+/* #write_solution_vue .submit-button:hover {
     background-color: rgb(22, 160, 56);
-}
+} */
 
 /* Modal styles */
 .modal-overlay {

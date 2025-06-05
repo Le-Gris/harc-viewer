@@ -2,11 +2,9 @@
 import { ref } from 'vue';
 import useViewAPI from '@/core/composables/useViewAPI';
 import { errorMsg, successMsg } from '@/user/utils/uiUtils.js';
+import { EXPERIMENT_CONFIG } from '../utils/arcConstants';
 
 const api = useViewAPI();
-
-// Values from your original quiz logic
-const MAX_TASKS_IN_EXPERIMENT = 5; // This should ideally come from a central config or smilestore
 
 const quizAnswers = ref({
     q1_timed: 'yes',
@@ -17,8 +15,8 @@ const quizAnswers = ref({
 
 function handleSubmitQuiz() {
     const correct_q1 = quizAnswers.value.q1_timed === 'no'; // Tasks are not timed
-    const correct_q2 = parseInt(quizAnswers.value.q2_attempts) === 3; // 3 attempts
-    const correct_q3 = parseInt(quizAnswers.value.q3_total_tasks) === MAX_TASKS_IN_EXPERIMENT;
+    const correct_q2 = parseInt(quizAnswers.value.q2_attempts) === EXPERIMENT_CONFIG.MAX_ATTEMPTS_PER_TASK;
+    const correct_q3 = parseInt(quizAnswers.value.q3_total_tasks) === EXPERIMENT_CONFIG.MAX_TASKS_PER_EXPERIMENT;
     const correct_q4 = parseInt(quizAnswers.value.q4_bonus_sample) === 1; // 1 bonus sample
 
     if (correct_q1 && correct_q2 && correct_q3 && correct_q4) {
@@ -33,7 +31,9 @@ function handleSubmitQuiz() {
 <template>
     <div class="tutorial-quiz-view">
         <h2>Tutorial Comprehension Check</h2>
-        <p>Before you begin the main experiment, please answer these questions to check your understanding.</p>
+        <p><strong>Before you begin the main experiment, we have a few more questions to
+                check your understanding of the task. You will need to answer them all
+                correctly in order to continue.</strong></p>
 
         <div class="quiz-question">
             <label>Are any of the tasks timed?</label>
@@ -62,14 +62,19 @@ function handleSubmitQuiz() {
         </div>
 
         <div class="quiz-question">
-            <label for="q4_bonus_sample_vue">How many tasks will be randomly sampled to check for a performance
-                bonus?</label>
+            <label for="q4_bonus_sample_vue"><strong>Finally, we will randomly sample one of your tasks to check for
+                    accuracy
+                    and description quality. You will be awarded a one dollar bonus if it is
+                    answered correctly within three attempts and the description is of the
+                    quality outlined in the tutorial. How many tasks will be randomly sampled to check for a
+                    performance
+                    bonus?</strong></label>
             <select id="q4_bonus_sample_vue" v-model="quizAnswers.q4_bonus_sample">
                 <option v-for="i in 10" :key="i" :value="String(i)">{{ i }}</option>
             </select>
         </div>
 
-        <button @click="handleSubmitQuiz" class="submit-quiz-button">Submit Quiz</button>
+        <button @click="handleSubmitQuiz" class="button is-success">Submit Quiz</button>
     </div>
 </template>
 
@@ -105,20 +110,29 @@ function handleSubmitQuiz() {
     border-radius: 5px;
 }
 
-.quiz-question label {
+.quiz-question>label {
     display: block;
     font-weight: bold;
     margin-bottom: 8px;
     color: #495057;
 }
 
-.quiz-question input[type="radio"] {
-    margin-right: 5px;
+.quiz-question>div {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    justify-content: center;
 }
 
-.quiz-question input[type="radio"]+label {
+.quiz-question>div label {
+    display: flex;
+    align-items: center;
     font-weight: normal;
-    margin-right: 15px;
+    margin: 0;
+}
+
+.quiz-question input[type="radio"] {
+    margin: 0 5px 0 0;
 }
 
 .quiz-question select {
@@ -126,21 +140,5 @@ function handleSubmitQuiz() {
     border-radius: 4px;
     border: 1px solid #ced4da;
     min-width: 60px;
-}
-
-.submit-quiz-button {
-    display: block;
-    margin: 25px auto 0 auto;
-    padding: 12px 25px;
-    font-size: 1.1em;
-    background-color: #28a745;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.submit-quiz-button:hover {
-    background-color: #218838;
 }
 </style>

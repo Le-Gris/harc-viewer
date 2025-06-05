@@ -2147,7 +2147,8 @@ onBeforeUnmount(() => {
 
                         <div>
                             <br />
-                            <label for="bonus_question">How many tasks will we randomly sample to award a bonus?</label>
+                            <label for="bonus_question">How many tasks will we randomly sampled to award a
+                                bonus?</label>
                             <select id="bonus_question">
                                 <option value="1" Selected>1</option>
                                 <option value="2">2</option>
