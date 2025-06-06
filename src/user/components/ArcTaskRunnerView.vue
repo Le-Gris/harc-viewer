@@ -221,7 +221,7 @@ const gridWidth = computed({
                             data-tooltip="Describe your reasoning and solution approach"></textarea>
                         <button @click="handleDescriptionSubmit"
                             class="button is-success has-tooltip-arrow has-tooltip-top"
-                            data-tooltip="Submit your description and continue to the next task">Submit
+                            data-tooltip="Submit your description">Submit
                             Description</button>
                     </div>
 
