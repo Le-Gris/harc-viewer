@@ -173,12 +173,12 @@ const gridWidth = computed({
                 <div v-for="(pair, index) in trainPairsForDisplay" :key="pair.id" class="example-pair">
                     <div class="grid-group">
                         <div class="grid-header">Example Input {{ index + 1 }}</div>
-                        <EditableGrid :gridInstance="pair.inputGrid" :containerWidth="200" :containerHeight="200"
+                        <EditableGrid :gridInstance="pair.inputGrid" :containerWidth="150" :containerHeight="150"
                             :maxCellSize="30" />
                     </div>
                     <div class="grid-group">
                         <div class="grid-header">Example Output {{ index + 1 }}</div>
-                        <EditableGrid :gridInstance="pair.outputGrid" :containerWidth="200" :containerHeight="200"
+                        <EditableGrid :gridInstance="pair.outputGrid" :containerWidth="150" :containerHeight="150"
                             :maxCellSize="30" />
                     </div>
                 </div>
@@ -440,9 +440,9 @@ const gridWidth = computed({
 }
 
 .example-pair {
-    padding: 5px;
+    padding: 10px;
     display: flex;
-    gap: 5px;
+    gap: 30px;
     justify-content: space-between;
 }
 
