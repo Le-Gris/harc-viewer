@@ -3,50 +3,70 @@ import { computed } from 'vue'
 // setup the info for the page here
 
 // main title
-const title = 'This is my default title for a project'
+const title = 'H-ARC: A Comprehensive Behavioral Dataset for the Abstraction and Reasoning Corpus'
 //subtitle
-const subtitle = 'This is a subtitle for my project which makes it seem interesting and relevant to a wide audience.'
+const subtitle = 'How do people reason about abstract visual program synthesis problems?'
 
 // access today's date
 const lastupdated = __BUILD_TIME__
 
 // site author (who is publishing this or made the present mode site?)
 const siteauthor = {
-  name: 'Todd Gureckis',
-  link: 'https://gureckislab.org',
+  name: 'Solim LeGris',
+  link: 'https://solimlegris.com',
 }
 
 // project authors (who made the project?)
 const projectauthors = [
   {
-    name: 'Todd Gureckis',
-    link: 'https://todd.gureckislab.org',
+    name: 'Solim LeGris',
+    link: 'https://solimlegris.com',
     affiliation: 'New York University',
   },
   {
-    name: 'Guy Davidson',
-    link: 'https://guydavidson.me/',
-    affiliation: ['New York University', 'Meta AI Labs'],
+    name: 'Wai Keen Vong',
+    link: 'https://www.waikeenvong.com/',
+    affiliation: ['Meta'],
   },
+  {
+    name: 'Brenden Lake',
+    link: 'https://cims.nyu.edu/~brenden/',
+    affiliation: ['New York University'],
+  },
+  {
+    name: 'Todd Gureckis',
+    link: 'https://todd.gureckislab.org',
+    affiliation: ['New York University'],
+  }
 ]
 
 // a list of project info include urls to prprints
 // the link field is optional
 const info = [
+  // {
+  //   title: 'DOI',
+  //   data: '10.23915/distill.00032',
+  //   link: 'https://doi.org/10.23915/distill.00032',
+  // },
   {
-    title: 'DOI',
-    data: '10.23915/distill.00032',
-    link: 'https://doi.org/10.23915/distill.00032',
+    title: 'Publication',
+    data: 'Under review',
+    link: '',
   },
   {
     title: 'Project Site',
-    data: 'gureckislab.org',
-    link: 'https://gureckislab.org',
+    data: 'arc-visualizations.github.io',
+    link: 'https://arc-visualizations.github.io/',
   },
   {
-    title: 'arxiv Preprint',
-    data: 'link',
-    link: 'https://gureckislab.org',
+    title: 'Experiment code',
+    data: 'Github repo',
+    link: 'https://github.com/Le-Gris/harc-viewer',
+  },
+  {
+    title: 'Dataset',
+    data: 'OSF repo',
+    link: 'https://osf.io/bh8yq/',
   },
 ]
 
@@ -92,16 +112,14 @@ function getAffiliationIndex(affiliation) {
                   <sup>
                     <template v-for="(aff, affIndex) in getUniqueAffiliations(author.affiliation)" :key="affIndex">
                       {{ getAffiliationIndex(aff)
-                      }}{{ affIndex < getUniqueAffiliations(author.affiliation).length - 1 ? ',' : '' }}
-                    </template>
+                      }}{{ affIndex < getUniqueAffiliations(author.affiliation).length - 1 ? ',' : '' }} </template>
                   </sup>
                 </div>
               </div>
               <div class="column is-7">
                 <div class="info-header">Affiliation</div>
                 <div class="info-data" v-for="(aff, index) in uniqueAffiliations" :key="index">
-                  <sup>{{ index + 1 }}</sup
-                  >&nbsp;{{ aff }}
+                  <sup>{{ index + 1 }}</sup>&nbsp;{{ aff }}
                 </div>
               </div>
             </div>
@@ -124,21 +142,63 @@ function getAffiliationIndex(affiliation) {
     </section>
     <div class="content">
       <p class="is-size-6 has-text-left">
-        This is a description of this project. It was a project that took many years to set up. The purpose of this site
-        is to document the project and to allow people to experience the task first hand. Presentation mode is a nice
-        way to share the experiment with the world. In addition you can use presentation mode a simple interface/viewer
-        for your task. It's actually pretty fun.
+        <strong>H-ARC (Human-ARC)</strong> is a comprehensive behavioral dataset for the Abstraction and Reasoning
+        Corpus
+        (ARC), a
+        benchmark designed to test analogical generalization and program synthesis in both humans and machines.
       </p>
       <p class="is-size-6 has-text-left">
-        Maybe someday we can make this like a full featured scientific writing tool with support for math equations and
-        stuff but for now this is just a starter template with a design inspited by the Distill.pub website.
+        <strong>What is ARC?</strong><br>
+        The ARC benchmark, introduced by François Chollet, challenges solvers to infer abstract rules from a handful of
+        visual input-output examples and apply them to novel test cases. While recent AI models have made rapid progress
+        on
+        many benchmarks, ARC remains a uniquely difficult challenge for both humans and machines, requiring
+        compositional
+        reasoning, abstraction, and flexible problem-solving.
       </p>
       <p class="is-size-6 has-text-left">
-        You can write as much as you want here and then you can include links and other elements from your experiment.
+        <strong>What does H-ARC provide?</strong><br>
+        H-ARC presents the largest human evaluation of ARC to date, collecting over 15,000 solution attempts and
+        detailed
+        action traces from more than 1,700 participants on the full set of 400 training and 400 evaluation ARC tasks.
+        For
+        each problem, the dataset includes:
+      <ul>
+        <li><strong>Step-by-step behavioral action traces</strong>: Every click, tool use, and grid edit made by
+          participants as they constructed their solutions.</li>
+        <li><strong>Natural-language solution descriptions</strong>: Free-form explanations of the inferred rules or
+          programs, written by participants.</li>
+        <li><strong>Comprehensive performance data</strong>: Success rates, error patterns, and learning curves across
+          tasks
+          and attempts.</li>
+        <li><strong>Demographic and feedback data</strong>: Anonymized participant information and qualitative feedback.
+        </li>
+      </ul>
+      All data is available under a CC0 1.0 Universal
+      license, supporting open research in cognitive science and artificial intelligence.
       </p>
       <p class="is-size-6 has-text-left">
-        Use the links below to navigate to different parts of the experiment, or use the navigation bar at the top of
-        the page.
+        <strong>Why is this important?</strong><br>
+      <ul>
+        <li><strong>Benchmarking AI</strong>: H-ARC provides a robust, large-scale estimate of human performance on ARC,
+          serving as a critical benchmark for evaluating and inspiring new AI models.</li>
+        <li><strong>Understanding human reasoning</strong>: The dataset enables in-depth analysis of how people solve
+          abstract problems, including the strategies, errors, and conceptual leaps that characterize human
+          intelligence.
+        </li>
+        <li><strong>Pushing AI forward</strong>: Current SOTA models achieved impressive results on <a
+            href="https://arcprize.org/arc-agi">ARC-AGI-1</a> (the ARC
+          dataset we used for our experiments), but these results were achieved using models that require orders of
+          magnitude more training data than people. We hope deeper analysis of this dataset inspires more human-like AI
+          models that can flexibly reason in more resource-constrained settings.</li>
+      </ul>
+      </p>
+      <p class="is-size-6 has-text-left">
+        <em>The H-ARC dataset and platform are described in our paper, currently under review at Scientific Data. This
+          site
+          is intended to showcase the experiment interface and make the data and tools accessible to the research
+          community
+          and the public.</em>
       </p>
       <hr />
       <h3 class="is-size-5">Start from beginning</h3>
@@ -146,8 +206,7 @@ function getAffiliationIndex(affiliation) {
         Start the experiment from the very beginning as if you were a real participant. Your data will not be saved,
         though some local storage may be used while you are on the page.
       </p>
-      <a href="#/welcome" class="button is-amber is-small"
-        >Start &nbsp;
+      <a href="#/welcome" class="button is-amber is-small">Start &nbsp;
         <FAIcon icon="fa-solid fa-arrow-right" />
       </a>
       <hr />
@@ -156,18 +215,15 @@ function getAffiliationIndex(affiliation) {
         Go to the task instructions to learn about how to play the game. After several pages of instructions, you can
         try out the comprehension quiz that real participants must pass to continue.
       </p>
-      <a href="#/instructions" class="button is-teal is-small"
-        >Instructions &nbsp;
+      <a href="#/tutorial_slides" class="button is-teal is-small">Instructions &nbsp;
         <FAIcon icon="fa-solid fa-arrow-right" />
       </a>
       <hr />
-      <h3 class="is-size-5">Play captcha game</h3>
+      <h3 class="is-size-5">Explore the dataset</h3>
       <p class="is-size-6">
-        Try out the captcha game participants play to ensure that they are human (and that the required software loads
-        properly in their browser).
+        If you want to explore the dataset
       </p>
-      <a href="#/captcha" class="button is-emerald is-small"
-        >Captcha &nbsp;
+      <a href="#/captcha" class="button is-emerald is-small">Captcha &nbsp;
         <FAIcon icon="fa-solid fa-arrow-right" />
       </a>
     </div>
