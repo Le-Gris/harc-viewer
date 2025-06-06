@@ -54,7 +54,7 @@ const info = [
     link: '',
   },
   {
-    title: 'Project Site',
+    title: 'Dataset viewer',
     data: 'arc-visualizations.github.io',
     link: 'https://arc-visualizations.github.io/',
   },
@@ -156,6 +156,21 @@ function getAffiliationIndex(affiliation) {
         compositional
         reasoning, abstraction, and flexible problem-solving.
       </p>
+      <div
+        style="width:100%;display:flex;justify-content:center;margin:24px 0;flex-direction:column;align-items:center;">
+        <img src="/arc-preprint-figure2.png" alt="ARC Preprint Figure 2"
+          style="max-width:80%;height:auto;border-radius:10px;box-shadow:2px 2px 12px rgba(0,0,0,0.08);padding:12px;" />
+        <div
+          style="max-width:80%;margin-top:10px;font-size:14px;color:#444;text-align:left;background:#f7f7f7;padding:12px 18px;border-radius:6px;box-shadow:0 1px 6px rgba(0,0,0,0.04);">
+          <strong>Human action traces on ARC problems.</strong>
+          In the left column, we show the test input seen by participants and the true test output grid for three
+          different problems from the ARC evaluation set. In the middle column, action traces show some successive
+          states of the grid of a selected participant, with the last state corresponding to a correct (green box) or
+          incorrect (red box) submission. In the last column, we show the first natural-language descriptions
+          submitted by participants along with their solution. From top to bottom: <code>34b99a2b.json</code>,
+          <code>4364c1c4.json</code> and <code>a8610ef7.json</code>.
+        </div>
+      </div>
       <p class="is-size-6 has-text-left">
         <strong>What does H-ARC provide?</strong><br>
         H-ARC presents the largest human evaluation of ARC to date, collecting over 15,000 solution attempts and
@@ -186,7 +201,7 @@ function getAffiliationIndex(affiliation) {
           abstract problems, including the strategies, errors, and conceptual leaps that characterize human
           intelligence.
         </li>
-        <li><strong>Pushing AI forward</strong>: Current SOTA models achieved impressive results on <a
+        <li><strong>Toward more human-like AI</strong>: Current SOTA models achieved impressive results on <a
             href="https://arcprize.org/arc-agi">ARC-AGI-1</a> (the ARC
           dataset we used for our experiments), but these results were achieved using models that require orders of
           magnitude more training data than people. We hope deeper analysis of this dataset inspires more human-like AI
@@ -194,7 +209,7 @@ function getAffiliationIndex(affiliation) {
       </ul>
       </p>
       <p class="is-size-6 has-text-left">
-        <em>The H-ARC dataset and platform are described in our paper, currently under review at Scientific Data. This
+        <em>The H-ARC dataset and platform are described in our paper, currently under review. This
           site
           is intended to showcase the experiment interface and make the data and tools accessible to the research
           community
@@ -221,9 +236,9 @@ function getAffiliationIndex(affiliation) {
       <hr />
       <h3 class="is-size-5">Explore the dataset</h3>
       <p class="is-size-6">
-        If you want to explore the dataset
+        If you want to visually explore the dataset, please visit our dataset viewer webpage.
       </p>
-      <a href="#/captcha" class="button is-emerald is-small">Captcha &nbsp;
+      <a href="https://arc-visualizations.github.io/" class="button is-emerald is-small">Explore dataset &nbsp;
         <FAIcon icon="fa-solid fa-arrow-right" />
       </a>
     </div>
