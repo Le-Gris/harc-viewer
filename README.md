@@ -78,13 +78,6 @@ For more detailed information about developing with Smile, visit the [official d
 
 The H-ARC dataset is available under a CC0 1.0 Universal license at [OSF](https://osf.io/bh8yq/).
 
-## Authors
-
-- Solim LeGris (New York University)
-- Wai Keen Vong (Meta)
-- Brenden Lake (New York University)
-- Todd Gureckis (New York University)
-
 ## License
 
 This project is open source and available under the MIT License.
