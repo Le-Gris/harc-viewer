@@ -172,11 +172,7 @@ jobs:
       # Build the web app
       - name: Build web app
         run: |
-          if ${{ github.ref == 'refs/heads/presentation'}}; then 
-            npm run build:present 
-          else
-            npm run build
-          fi
+          npm run build:present
 
       - name: list files
         run: |
