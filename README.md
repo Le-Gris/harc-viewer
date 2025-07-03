@@ -1,6 +1,6 @@
 # H-ARC Viewer
 
-A web-based viewer for the Human-ARC (H-ARC) experiment interface. This project is built using [Smile](https://smile.gureckislab.org), a framework for creating online experiments.
+A web-based viewer for the Human-ARC (H-ARC) experiment interface (publication under review).
 
 ## Overview
 
@@ -16,7 +16,7 @@ H-ARC presents the largest human evaluation of ARC to date, collecting over 15,0
 
 ## Live Demo
 
-Visit our dataset viewer at [arc-visualizations.github.io](https://arc-visualizations.github.io/)
+Visit the live demo [here](https://exps.gureckislab.org/e/assumption-fast-natural/#/).
 
 ## Development Setup
 
@@ -68,15 +68,13 @@ npm run preview
 
 This project is built using Smile, which provides:
 
-- Hot Module Replacement for faster development
-- Automatic bundling and optimization
-- Built-in development tools and utilities
+- Built-in development tools and utilities for designing and deploying online behavioural experiments
 
 For more detailed information about developing with Smile, visit the [official documentation](https://smile.gureckislab.org/developing.html).
 
 ## Dataset Access
 
-The H-ARC dataset is available under a CC0 1.0 Universal license at [OSF](https://osf.io/bh8yq/).
+The H-ARC dataset is available under a CC0 1.0 Universal license at [OSF](https://osf.io/bh8yq/). Visit our dataset viewer at [arc-visualizations.github.io](https://arc-visualizations.github.io/)
 
 ## License
 
