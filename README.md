@@ -4,15 +4,7 @@ A web-based viewer for the Human-ARC (H-ARC) experiment interface (publication u
 
 ## Overview
 
-H-ARC presents the largest human evaluation of ARC to date, collecting over 15,000 solution attempts and detailed action traces from more than 1,700 participants on the full set of 400 training and 400 evaluation ARC tasks. This viewer provides an interface to explore and interact with the dataset.
-
-## Features
-
-- Interactive experiment interface
-- Step-by-step behavioral action traces
-- Natural-language solution descriptions
-- Comprehensive performance data visualization
-- Demographic and feedback data analysis
+H-ARC presents the largest human evaluation of ARC to date, collecting over 15,000 solution attempts and detailed action traces from more than 1,700 participants on the full set of 400 training and 400 evaluation ARC tasks. This codebase makes publicly accessible the web interface with which we collected the data.
 
 ## Live Demo
 
@@ -66,9 +58,7 @@ npm run preview
 
 ## Project Structure
 
-This project is built using Smile, which provides:
-
-- Built-in development tools and utilities for designing and deploying online behavioural experiments
+This project is built using Smile.
 
 For more detailed information about developing with Smile, visit the [official documentation](https://smile.gureckislab.org/developing.html).
 
