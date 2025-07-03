@@ -1,22 +1,14 @@
 # H-ARC Viewer
 
-A web-based viewer for the Human-ARC (H-ARC) experiment interface. This project is built using [Smile](https://smile.gureckislab.org), a framework for creating online experiments.
+A web-based viewer for the Human-ARC (H-ARC) experiment interface (publication under review).
 
 ## Overview
 
-H-ARC presents the largest human evaluation of ARC to date, collecting over 15,000 solution attempts and detailed action traces from more than 1,700 participants on the full set of 400 training and 400 evaluation ARC tasks. This viewer provides an interface to explore and interact with the dataset.
-
-## Features
-
-- Interactive experiment interface
-- Step-by-step behavioral action traces
-- Natural-language solution descriptions
-- Comprehensive performance data visualization
-- Demographic and feedback data analysis
+H-ARC presents the largest human evaluation of ARC to date, collecting over 15,000 solution attempts and detailed action traces from more than 1,700 participants on the full set of 400 training and 400 evaluation ARC tasks. This codebase makes publicly accessible the web interface with which we collected the data.
 
 ## Live Demo
 
-Visit our dataset viewer at [arc-visualizations.github.io](https://arc-visualizations.github.io/)
+Visit the live demo [here](https://exps.gureckislab.org/e/assumption-fast-natural/#/).
 
 ## Development Setup
 
@@ -66,24 +58,13 @@ npm run preview
 
 ## Project Structure
 
-This project is built using Smile, which provides:
-
-- Hot Module Replacement for faster development
-- Automatic bundling and optimization
-- Built-in development tools and utilities
+This project is built using Smile.
 
 For more detailed information about developing with Smile, visit the [official documentation](https://smile.gureckislab.org/developing.html).
 
 ## Dataset Access
 
-The H-ARC dataset is available under a CC0 1.0 Universal license at [OSF](https://osf.io/bh8yq/).
-
-## Authors
-
-- Solim LeGris (New York University)
-- Wai Keen Vong (Meta)
-- Brenden Lake (New York University)
-- Todd Gureckis (New York University)
+The H-ARC dataset is available under a CC0 1.0 Universal license at [OSF](https://osf.io/bh8yq/). Visit our dataset viewer at [arc-visualizations.github.io](https://arc-visualizations.github.io/)
 
 ## License
 
