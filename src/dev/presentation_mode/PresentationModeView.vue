@@ -45,8 +45,8 @@ const projectauthors = [
 const info = [
   {
     title: 'Publication',
-    data: 'Under review',
-    link: '',
+    data: 'Scientific Data',
+    link: 'https://www.nature.com/articles/s41597-025-05687-1',
   },
   {
     title: 'Dataset viewer',
