@@ -43,15 +43,10 @@ const projectauthors = [
 // a list of project info include urls to prprints
 // the link field is optional
 const info = [
-  // {
-  //   title: 'DOI',
-  //   data: '10.23915/distill.00032',
-  //   link: 'https://doi.org/10.23915/distill.00032',
-  // },
   {
     title: 'Publication',
-    data: 'Under review',
-    link: '',
+    data: 'Scientific Data',
+    link: 'https://www.nature.com/articles/s41597-025-05687-1',
   },
   {
     title: 'Dataset viewer',
@@ -67,6 +62,11 @@ const info = [
     title: 'Dataset',
     data: 'OSF repo',
     link: 'https://osf.io/bh8yq/',
+  },
+  {
+    title: 'Analysis code',
+    data: 'Github repo',
+    link: 'https://github.com/Le-Gris/h-arc',
   },
 ]
 
